@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Summary</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <h1>Booking Summary</h1>
+    <p>Bus: {{ bus.name }}</p>
+    <p>Boarding Point: {{ boarding_point.name }}</p>
+    <p>Dropping Point: {{ dropping_point.name }}</p>
+    <form method="post">
+        {% csrf_token %}
+        <h2>Select Seat</h2>
+        <ul>
+            {% for seat in seats %}
+                <li>
+                    <input type="radio" id="seat_{{ seat.id }}" name="seat_id" value="{{ seat.id }}">
+                    <label for="seat_{{ seat.id }}">{{ seat.seat_number }}</label>
+                </li>
+            {% endfor %}
+        </ul>
+        <button type="submit">Proceed to Payment</button>
+    </form>
+</body>
+</html>

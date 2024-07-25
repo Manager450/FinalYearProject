@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Home - BusTicketX</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f8f8f8;
+        }
+        .hamburger {
+            font-size: 30px;
+            cursor: pointer;
+            user-select: none;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+        .menu {
+            display: none;
+            flex-direction: column;
+            position: absolute;
+            top: 50px;
+            left: 20px;
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .menu a {
+            text-decoration: none;
+            color: black;
+            padding: 5px 0;
+        }
+        .menu a:hover {
+            background-color: #f0f0f0;
+        }
+        .container {
+            text-align: center;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        select, input[type="date"] {
+            padding: 10px;
+            margin: 10px 0;
+            width: 80%;
+            max-width: 300px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <div class="hamburger" onclick="toggleMenu()">☰</div>
+    <div class="menu" id="menu">
+        <a href="{% url 'home' %}">Home</a>
+        <a href="{% url 'my_bookings' %}">My Bookings</a>
+        <a href="{% url 'register' %}">Register</a>
+        <a href="{% url 'login' %}">Login</a>
+        <a href="{% url 'logout' %}">Logout</a>
+        <a href="{% url 'settings' %}">Settings</a>
+        <a href="{% url 'terms' %}">Terms and Conditions</a>
+        <a href="{% url 'help' %}">Help</a>
+        <a href="{% url 'faqs' %}">FAQs</a>
+        <a href="{% url 'about' %}">About</a>
+    </div>
+    <h1>BusTicketX</h1>
+    <div class="container">
+        <h1>Online Bus Ticket Booking</h1>
+        <form action="{% url 'search_results' %}" method="get">
+            <select id="source" name="source" required>
+                <option value="" disabled selected>Select Source</option>
+                <option value="Accra">Accra</option>
+                <option value="Kumasi">Kumasi</option>
+                <option value="Tamale">Tamale</option>
+                <option value="Takoradi">Takoradi</option>
+            </select>
+            <select id="destination" name="destination" required>
+                <option value="" disabled selected>Select Destination</option>
+                <option value="Accra">Accra</option>
+                <option value="Kumasi">Kumasi</option>
+                <option value="Tamale">Tamale</option>
+                <option value="Takoradi">Takoradi</option>
+            </select>
+            <input type="date" name="date" required>
+            <button type="submit">Search</button>
+        </form>
+    </div>
+
+    <script>
+        function toggleMenu() {
+            var menu = document.getElementById('menu');
+            if (menu.style.display === 'flex') {
+                menu.style.display = 'none';
+            } else {
+                menu.style.display = 'flex';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Payment - BusTicketX</title>
+</head>
+<body>
+    <h1>Payment for Booking: {{ booking.bus.name }}</h1>
+    <p>Amount: {{ booking.bus.price }}</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Pay Now</button>
+    </form>
+</body>
+</html>

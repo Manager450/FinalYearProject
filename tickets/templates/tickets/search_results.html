@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset ="UTF-8">
+    <title>Search Results - BusTicketX</title>
+</head>
+<body>
+    <h1>Search Results</h1>
+{% if buses %}
+    {% for bus in buses %}
+        <div class="bus-result">
+            <div class="time">
+                <span class="departure">{{ bus.departure_time }}</span> - 
+                <span class="arrival">{{ bus.arrival_time }}</span>
+            </div>
+            <div class="duration-seats">
+                <span class="duration">{{ bus.travel_duration }}</span> • 
+                <span class="seats">{{ bus.seats_available }} Seats ({{ bus.seat_type }})</span>
+            </div>
+            <div class="bus-info">
+                <span class="operator">{{ bus.operator }}</span> • 
+                <span class="bus-type">{{ bus.bus_type }}</span>
+            </div>
+            <div class="fare-rating">
+                <span class="fare">From &#8373;{{ bus.fare }}</span>
+                <span class="rating">{{ bus.ratings }} ★</span>
+            </div>
+        </div>
+    {% endfor %}
+{% else %}
+    <div class="no-results">
+        No buses available for the selected route and date.
+    </div>
+{% endif %}
+
+<style>
+    .bus-result {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 16px;
+        background-color: #fff;
+        display: flex;
+        flex-direction: column;
+    }
+    .time {
+        font-size: 18px;
+        font-weight: bold;
+    }
+    .duration-seats, .bus-info, .fare-rating {
+        margin-top: 8px;
+    }
+    .fare-rating {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .fare {
+        font-size: 16px;
+        font-weight: bold;
+    }
+    .rating {
+        background-color: #f2c94c;
+        border-radius: 12px;
+        padding: 4px 8px;
+        font-size: 14px;
+        color: #fff;
+    }
+    .no-results {
+        text-align: center;
+        font-size: 16px;
+        color: #999;
+    }
+</style>
+</body>
+</html>

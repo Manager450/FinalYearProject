@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bus Details - BusTicketX</title>
+</head>
+<body>
+    <h1>{{ bus.name }}</h1>
+    <p>Operator: {{ bus.operator }}</p>
+    <p>Departure: {{ bus.departure_time }}</p>
+    <p>Arrival: {{ bus.arrival_time }}</p>
+    <p>Route: {{ bus.source }} to {{ bus.destination }}</p>
+    <p>Price: {{ bus.price }}</p>
+    <p>Amenities: {{ bus.amenities }}</p>
+    <a href="{% url 'book_bus' bus.id %}">Book Now</a>
+</body>
+</html>

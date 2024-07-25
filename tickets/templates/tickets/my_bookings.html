@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Bookings - BusTicketX</title>
+</head>
+<body>
+    <h1>My Bookings</h1>
+    {% for booking in bookings %}
+        <div>
+            <a href="{% url 'booking_details' booking.id %}">{{ booking.bus.name }}</a>
+            <p>Seat: {{ booking.seat_number }}</p>
+            <p>Booked On: {{ booking.booked_on }}</p>
+        </div>
+    {% endfor %}
+</body>
+</html>
