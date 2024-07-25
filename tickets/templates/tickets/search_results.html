@@ -6,6 +6,7 @@
 </head>
 <body>
     <h1>Search Results</h1>
+<h2>Bus(es) from {{ source }} to {{ destination }}</h2>
 {% if buses %}
     {% for bus in buses %}
         <div class="bus-result">
@@ -14,8 +15,8 @@
                 <span class="arrival">{{ bus.arrival_time }}</span>
             </div>
             <div class="duration-seats">
-                <span class="duration">{{ bus.travel_duration }}</span> • 
-                <span class="seats">{{ bus.seats_available }} Seats ({{ bus.seat_type }})</span>
+                <span class="duration">{{ bus.travel_duration }} Hours</span> • 
+                <span class="seats">{{ bus.seats_available }} Seats</span>
             </div>
             <div class="bus-info">
                 <span class="operator">{{ bus.operator }}</span> • 
@@ -31,7 +32,7 @@
     <div class="no-results">
         No buses available for the selected route and date.
     </div>
-{% endif %}
+{% endif %}    
 
 <style>
     .bus-result {

@@ -4,6 +4,7 @@ from .forms import BookingForm, ReviewForm, UserRegistrationForm, BusRouteForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.forms import AuthenticationForm
+from datetime import datetime
 
 def home(request):
     return render(request, 'tickets/home.html')
@@ -12,8 +13,38 @@ def search_results(request):
     if request.method == 'GET':
         source = request.GET.get('source')
         destination = request.GET.get('destination')
+        date_str = request.GET.get('date')
+        if date_str:
+            travel_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        else:
+            travel_date = None
         buses = Bus.objects.filter(source=source, destination=destination)
-        return render(request, 'tickets/search_results.html', {'buses': buses})
+        if travel_date:
+            buses = buses.filter(departure_time__date=travel_date)
+
+            for bus in buses:
+                bus.travel_duration = (bus.arrival_time - bus.departure_time).total_seconds() // 3600
+                bus.seats_available = Seat.objects.filter(bus=bus, is_available=True).count()
+                bus.fare = bus.price
+
+            if source and destination and travel_date:
+                buses = Bus.objects.filter(source=source, destination=destination, departure_time__date=travel_date)  
+                context = {
+                    'buses' : buses,
+                    'source': source,
+                    'destination': destination,
+                    'date' : travel_date,
+                }
+            else:
+                context = {
+                    'buses' : [],
+                    'source': source,
+                    'destination': destination,
+                    'date' : travel_date,
+                }
+
+
+        return render(request, 'tickets/search_results.html', context)
 
 def select_boarding_dropping_points(request, bus_id):
     bus = Bus.objects.get(id=bus_id)
