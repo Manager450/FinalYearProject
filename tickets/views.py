@@ -22,11 +22,6 @@ def search_results(request):
         if travel_date:
             buses = buses.filter(departure_time__date=travel_date)
 
-            for bus in buses:
-                bus.travel_duration = (bus.arrival_time - bus.departure_time).total_seconds() // 3600
-                bus.seats_available = Seat.objects.filter(bus=bus, is_available=True).count()
-                bus.fare = bus.price
-
             if source and destination and travel_date:
                 buses = Bus.objects.filter(source=source, destination=destination, departure_time__date=travel_date)  
                 context = {
@@ -43,6 +38,11 @@ def search_results(request):
                     'date' : travel_date,
                 }
 
+            for bus in buses:
+                bus.travel_duration = (bus.arrival_time - bus.departure_time).total_seconds() // 3600
+                bus.seats_available = Seat.objects.filter(bus=bus, is_available=True).count()
+                bus.fare = bus.price
+
 
         return render(request, 'tickets/search_results.html', context)
 
@@ -57,7 +57,7 @@ def select_boarding_dropping_points(request, bus_id):
             return redirect('booking_summary', bus_id=bus.id, boarding_point_id=boarding_point.id, dropping_point_id=dropping_point.id)
     else:
         form = BusRouteForm()
-    return render(request, 'select_boarding_dropping.html', {'form': form, 'bus': bus})
+    return render(request, 'tickets/select_boarding_dropping.html', {'form': form, 'bus': bus})
 
 def booking_summary(request, bus_id, boarding_point_id, dropping_point_id):
     bus = Bus.objects.get(id=bus_id)
@@ -78,7 +78,7 @@ def booking_summary(request, bus_id, boarding_point_id, dropping_point_id):
         seat.is_available = False
         seat.save()
         return redirect('payment', booking_id=booking.id)
-    return render(request, 'booking_summary.html', {'bus': bus, 'boarding_point': boarding_point, 'dropping_point': dropping_point, 'seats': seats})
+    return render(request, 'tickets/booking_summary.html', {'bus': bus, 'boarding_point': boarding_point, 'dropping_point': dropping_point, 'seats': seats})
 
 def bus_details(request, bus_id):
     bus = get_object_or_404(Bus, id=bus_id)

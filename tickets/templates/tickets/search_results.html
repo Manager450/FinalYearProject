@@ -10,6 +10,7 @@
 {% if buses %}
     {% for bus in buses %}
         <div class="bus-result">
+            <a href="{% url 'select_boarding_dropping' bus.id %}" class="bus-button">
             <div class="time">
                 <span class="departure">{{ bus.departure_time }}</span> - 
                 <span class="arrival">{{ bus.arrival_time }}</span>
@@ -26,6 +27,7 @@
                 <span class="fare">From &#8373;{{ bus.fare }}</span>
                 <span class="rating">{{ bus.ratings }} ★</span>
             </div>
+            </a>
         </div>
     {% endfor %}
 {% else %}
@@ -35,6 +37,20 @@
 {% endif %}    
 
 <style>
+    .bus-button {
+        display: block;
+        padding: 10px;
+        margin: 10px 0;
+        background-color: #c0cad4;
+        color: rgb(15, 15, 15);
+        text-align: left;
+        text-decoration: none;
+        border-radius: 5px;
+        transition: background-color 0.3s ease;
+    }
+    .bus-button:hover {
+        background-color: #0056b3;
+    }
     .bus-result {
         border: 1px solid #e0e0e0;
         border-radius: 8px;
