@@ -21,6 +21,9 @@ class Bus(models.Model):
 
     def __str__(self):
         return self.name
+     
+    def available_seats(self):
+        return self.seat_set.filter(is_available=True).count()
 
 class BusStop(models.Model):
     name = models.CharField(max_length=100)

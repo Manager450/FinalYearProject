@@ -5,6 +5,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.forms import AuthenticationForm
 from datetime import datetime
+from django.contrib import messages
+from .utils import generate_ticket, send_mticket
+from django.http import FileResponse
 
 def home(request):
     return render(request, 'tickets/home.html')
@@ -22,26 +25,18 @@ def search_results(request):
         if travel_date:
             buses = buses.filter(departure_time__date=travel_date)
 
-            if source and destination and travel_date:
-                buses = Bus.objects.filter(source=source, destination=destination, departure_time__date=travel_date)  
-                context = {
+        buses = [bus for bus in buses if bus.available_seats() > 0]  
+        context = {
                     'buses' : buses,
                     'source': source,
                     'destination': destination,
                     'date' : travel_date,
                 }
-            else:
-                context = {
-                    'buses' : [],
-                    'source': source,
-                    'destination': destination,
-                    'date' : travel_date,
-                }
-
-            for bus in buses:
-                bus.travel_duration = (bus.arrival_time - bus.departure_time).total_seconds() // 3600
-                bus.seats_available = Seat.objects.filter(bus=bus, is_available=True).count()
-                bus.fare = bus.price
+            
+        for bus in buses:
+            bus.travel_duration = (bus.arrival_time - bus.departure_time).total_seconds() // 3600
+            bus.seats_available = Seat.objects.filter(bus=bus, is_available=True).count()
+            bus.fare = bus.price
 
 
         return render(request, 'tickets/search_results.html', context)
@@ -51,14 +46,20 @@ def select_boarding_dropping_points(request, bus_id):
     if request.method == 'POST':
         form = BusRouteForm(request.POST)
         if form.is_valid():
+            if not request.user.is_authenticated:
+                messages.info(request, "Please log in to complete your booking")
+                return redirect('login')
+
             boarding_point = form.cleaned_data['boarding_point']
             dropping_point = form.cleaned_data['dropping_point']
             # Save or process the data here
             return redirect('booking_summary', bus_id=bus.id, boarding_point_id=boarding_point.id, dropping_point_id=dropping_point.id)
     else:
         form = BusRouteForm()
+        
     return render(request, 'tickets/select_boarding_dropping.html', {'form': form, 'bus': bus})
 
+@login_required(login_url='/login/')
 def booking_summary(request, bus_id, boarding_point_id, dropping_point_id):
     bus = Bus.objects.get(id=bus_id)
     boarding_point = BusStop.objects.get(id=boarding_point_id)
@@ -112,7 +113,19 @@ def payment(request, booking_id):
 @login_required
 def payment_success(request, payment_id):
     payment = get_object_or_404(Payment, id=payment_id)
-    return render(request, 'tickets/payment_success.html', {'payment': payment})
+    booking = payment.booking
+
+    if request.method == 'POST':
+        if 'download' in request.POST:
+            buffer = generate_ticket(booking)
+            return FileResponse(buffer, as_attachment=True, filename='ticket.pdf')
+        elif 'send_sms' in request.POST:
+            phone_number = request.POST.get('phone_number', booking.user.profile.phone_number)  # Assume `User` model has a `profile` with `phone_number`
+            send_mticket(phone_number, booking)
+            messages.success(request, "m-Ticket sent successfully!")
+
+    return render(request, 'tickets/payment_success.html', {'payment': payment, 'booking': booking})
+
 
 @login_required
 def my_bookings(request):
@@ -129,6 +142,8 @@ def register(request):
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
+            user.profile.phone_number = form.cleaned_data.get('phone_number')
+            user.profile.save()
             login(request, user)
             return redirect('home')
     else:
@@ -189,4 +204,6 @@ def review_bus(request, bus_id):
     else:
         form = ReviewForm()
     return render(request, 'tickets/review_bus.html', {'form': form, 'bus': bus})
+
+
 

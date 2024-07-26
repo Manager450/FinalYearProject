@@ -7,5 +7,16 @@
 <body>
     <h1>Payment Success</h1>
     <p>Your payment for {{ payment.booking.bus.name }} was successful.</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" name="download">Download Ticket</button>
+      </form>
+    
+      <form method="post">
+        {% csrf_token %}
+        <label for="phone_number">Send m-Ticket to:</label>
+        <input type="text" id="phone_number" name="phone_number" value="{{ booking.user.profile.phone_number }}">
+        <button type="submit" name="send_sms">Send m-Ticket</button>
+      </form>
 </body>
 </html>
