@@ -12,18 +12,7 @@
     <h1>Select Boarding & Dropping Points</h1>
     <form method="post">
         {% csrf_token %}
-        <div>
-            <h2>Select Boarding Point</h2>
-            <select id="boarding-point" name="boarding_point">
-                <option value="">Select Boarding Point</option>
-            </select>
-        </div>
-        <div>
-            <h2>Dropping Point Selected</h2>
-            <select id="dropping-point" name="dropping_point">
-                <option value="">Select Dropping Point</option>
-            </select>
-        </div>
+        {{ form.as_p }}
         <button type="submit">Continue</button>
     </form>
 
@@ -40,10 +29,10 @@
                     'source': source
                 },
                 success: function(data) {
-                    $('#boarding-point').empty();
-                    $('#boarding-point').append('<option value="">Select Boarding Point</option>');
+                    $('#id_boarding-point').empty();
+                    $('#id_boarding-point').append('<option value="">Select Boarding Point</option>');
                     $.each(data, function(index, item) {
-                        $('#boarding-point').append('<option value="' + item.id + '">' + item.name + '</option>');
+                        $('#id_boarding-point').append('<option value="' + item.id + '">' + item.name + '</option>');
                     });
                 }
             });
@@ -55,10 +44,10 @@
                     'destination': destination
                 },
                 success: function(data) {
-                    $('#dropping-point').empty();
-                    $('#dropping-point').append('<option value="">Select Dropping Point</option>');
+                    $('#id_dropping-point').empty();
+                    $('#id_dropping-point').append('<option value="">Select Dropping Point</option>');
                     $.each(data, function(index, item) {
-                        $('#dropping-point').append('<option value="' + item.id + '">' + item.name + '</option>');
+                        $('#id_dropping-point').append('<option value="' + item.id + '">' + item.name + '</option>');
                     });
                 }
             });

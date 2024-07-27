@@ -6,7 +6,10 @@ from django.contrib.auth.forms import UserCreationForm
 class BusRouteForm(forms.Form):
     boarding_point = forms.ModelChoiceField(queryset=BusStop.objects.none(), widget=forms.RadioSelect)
     dropping_point = forms.ModelChoiceField(queryset=BusStop.objects.none(), widget=forms.RadioSelect)
-
+    class Meta:
+        model = Booking
+        fields = ['boarding_point','dropping_point']
+   
 class BookingForm(forms.ModelForm):
     class Meta:
         model = Booking

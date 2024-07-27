@@ -54,6 +54,9 @@ def select_boarding_dropping_points(request, bus_id):
             dropping_point = form.cleaned_data['dropping_point']
             # Save or process the data here
             return redirect('booking_summary', bus_id=bus.id, boarding_point_id=boarding_point.id, dropping_point_id=dropping_point.id)
+        else:
+            messages.error(request, "Please select valid boarding and dropping points")
+            return render(request, 'tickets/select_boarding_dropping.html', {'form': form, 'bus': bus})
     else:
         boarding_points = BusStop.objects.filter(city=bus.source)
         dropping_points = BusStop.objects.filter(city=bus.destination)
