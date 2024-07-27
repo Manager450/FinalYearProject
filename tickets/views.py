@@ -7,7 +7,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from datetime import datetime
 from django.contrib import messages
 from .utils import generate_ticket, send_mticket
-from django.http import FileResponse
+from django.http import FileResponse, JsonResponse
 
 def home(request):
     return render(request, 'tickets/home.html')
@@ -42,7 +42,7 @@ def search_results(request):
         return render(request, 'tickets/search_results.html', context)
 
 def select_boarding_dropping_points(request, bus_id):
-    bus = Bus.objects.get(id=bus_id)
+    bus = get_object_or_404(Bus, id=bus_id)
     if request.method == 'POST':
         form = BusRouteForm(request.POST)
         if form.is_valid():
@@ -55,19 +55,23 @@ def select_boarding_dropping_points(request, bus_id):
             # Save or process the data here
             return redirect('booking_summary', bus_id=bus.id, boarding_point_id=boarding_point.id, dropping_point_id=dropping_point.id)
     else:
+        boarding_points = BusStop.objects.filter(city=bus.source)
+        dropping_points = BusStop.objects.filter(city=bus.destination)
         form = BusRouteForm()
-        
+        form.fields['boarding_point'].queryset = boarding_points
+        form.fields['dropping_point'].queryset = dropping_points
+
     return render(request, 'tickets/select_boarding_dropping.html', {'form': form, 'bus': bus})
 
 @login_required(login_url='/login/')
 def booking_summary(request, bus_id, boarding_point_id, dropping_point_id):
-    bus = Bus.objects.get(id=bus_id)
-    boarding_point = BusStop.objects.get(id=boarding_point_id)
-    dropping_point = BusStop.objects.get(id=dropping_point_id)
+    bus = get_object_or_404(Bus, id=bus_id)
+    boarding_point = get_object_or_404(BusStop, id=boarding_point_id)
+    dropping_point = get_object_or_404(BusStop, id=dropping_point_id)
     seats = Seat.objects.filter(bus=bus, is_available=True)
     if request.method == 'POST':
         seat_id = request.POST.get('seat_id')
-        seat = Seat.objects.get(id=seat_id)
+        seat = get_object_or_404(Seat, id=seat_id)
         booking = Booking.objects.create(
             user=request.user,
             bus=bus,
@@ -205,5 +209,15 @@ def review_bus(request, bus_id):
         form = ReviewForm()
     return render(request, 'tickets/review_bus.html', {'form': form, 'bus': bus})
 
+def get_boarding_points(request):
+    source = request.GET.get('source')
+    boarding_points = BusStop.objects.filter(city=source)
+    data = list(boarding_points.values('id', 'name'))
+    return JsonResponse(data, safe=False)
 
+def get_dropping_points(request):
+    destination = request.GET.get('destination')
+    dropping_points = BusStop.objects.filter(city=destination)
+    data = list(dropping_points.values('id', 'name'))
+    return JsonResponse(data, safe=False)
 

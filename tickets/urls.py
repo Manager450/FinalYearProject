@@ -23,4 +23,6 @@ urlpatterns = [
     path('help/', views.help_view, name='help'),
     path('faqs/', views.faqs, name='faqs'),
     path('review/<int:bus_id>/', views.review_bus, name='review_bus'),
+    path('ajax/boarding-points/', views.get_boarding_points, name='get_boarding_points'),
+    path('ajax/dropping-points/', views.get_dropping_points, name='get_dropping_points'),
 ]

@@ -4,8 +4,8 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 
 class BusRouteForm(forms.Form):
-    boarding_point = forms.ModelChoiceField(queryset=BusStop.objects.all(), widget=forms.RadioSelect)
-    dropping_point = forms.ModelChoiceField(queryset=BusStop.objects.all(), widget=forms.RadioSelect)
+    boarding_point = forms.ModelChoiceField(queryset=BusStop.objects.none(), widget=forms.RadioSelect)
+    dropping_point = forms.ModelChoiceField(queryset=BusStop.objects.none(), widget=forms.RadioSelect)
 
 class BookingForm(forms.ModelForm):
     class Meta:

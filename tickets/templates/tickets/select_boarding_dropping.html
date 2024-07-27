@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Select Boarding & Dropping Points</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
     <h1>Select Boarding & Dropping Points</h1>
@@ -13,13 +14,56 @@
         {% csrf_token %}
         <div>
             <h2>Select Boarding Point</h2>
-            {{ form.boarding_point }}
+            <select id="boarding-point" name="boarding_point">
+                <option value="">Select Boarding Point</option>
+            </select>
         </div>
         <div>
             <h2>Dropping Point Selected</h2>
-            {{ form.dropping_point }}
+            <select id="dropping-point" name="dropping_point">
+                <option value="">Select Dropping Point</option>
+            </select>
         </div>
         <button type="submit">Continue</button>
     </form>
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            // Get source and destination from the selected bus
+            var source = "{{ bus.source }}";
+            var destination = "{{ bus.destination }}";
+
+            // Load boarding points based on source city
+            $.ajax({
+                url: "{% url 'get_boarding_points' %}",
+                data: {
+                    'source': source
+                },
+                success: function(data) {
+                    $('#boarding-point').empty();
+                    $('#boarding-point').append('<option value="">Select Boarding Point</option>');
+                    $.each(data, function(index, item) {
+                        $('#boarding-point').append('<option value="' + item.id + '">' + item.name + '</option>');
+                    });
+                }
+            });
+
+            // Load dropping points based on destination city
+            $.ajax({
+                url: "{% url 'get_dropping_points' %}",
+                data: {
+                    'destination': destination
+                },
+                success: function(data) {
+                    $('#dropping-point').empty();
+                    $('#dropping-point').append('<option value="">Select Dropping Point</option>');
+                    $.each(data, function(index, item) {
+                        $('#dropping-point').append('<option value="' + item.id + '">' + item.name + '</option>');
+                    });
+                }
+            });
+        });
+    </script>
 </body>
 </html>
+
