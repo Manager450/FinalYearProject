@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Select Boarding & Dropping Points</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{% static 'js/jquery.min.js' %}"></script>
 </head>
 <body>
     <h1>Select Boarding & Dropping Points</h1>
@@ -14,58 +14,31 @@
         {% csrf_token %}
         <div>
             <h3>Boarding point:</h3>
-            {% for field in form.boarding_point %}
-                <label>
-                    <input type="radio" name="boarding_point" value="{{ field.choice_value }}" id="{{ field.id_for_label }}">
-                    {{ field.choice_label }}
-                </label><br>
-            {% endfor %}
+            {{ form.boarding_point }}
         </div>
         <div>
             <h3>Dropping point:</h3>
-            {% for field in form.dropping_point %}
-                <label>
-                    <input type="radio" name="dropping_point" value="{{ field.choice_value }}" id="{{ field.id_for_label }}">
-                    {{ field.choice_label }}
-                </label><br>
-            {% endfor %}
+            {{ form.dropping_point }}
         </div>
         <button type="submit">Continue</button>
     </form>
-
     <script type="text/javascript">
         $(document).ready(function() {
-            var source = "{{ bus.source }}";
-            var destination = "{{ bus.destination }}";
-
-            // Load boarding points based on source city
-            $.ajax({
-                url: "{% url 'get_boarding_points' %}",
-                data: { 'source': source },
-                success: function(data) {
-                    var boardingPointContainer = $('#id_boarding_point');
-                    boardingPointContainer.empty();
-                    $.each(data, function(index, item) {
-                        boardingPointContainer.append(
-                            `<label><input type="radio" name="boarding_point" value="${item.id}"> ${item.name}</label><br>`
-                        );
-                    });
-                }
-            });
-
-            // Load dropping points based on destination city
-            $.ajax({
-                url: "{% url 'get_dropping_points' %}",
-                data: { 'destination': destination },
-                success: function(data) {
-                    var droppingPointContainer = $('#id_dropping_point');
-                    droppingPointContainer.empty();
-                    $.each(data, function(index, item) {
-                        droppingPointContainer.append(
-                            `<label><input type="radio" name="dropping_point" value="${item.id}"> ${item.name}</label><br>`
-                        );
-                    });
-                }
+            // Prevent default form submission behavior and submit form using AJAX
+            $('form').submit(function(e) {
+                e.preventDefault();
+                $.ajax({
+                    type: 'POST',
+                    url: '{% url "select_boarding_dropping" bus.id %}',
+                    data: $(this).serialize(),
+                    success: function(data) {
+                        if (data.success) {
+                            window.location.href = data.redirect_url;
+                        } else {
+                            console.log(data.errors);
+                        }
+                    }
+                });
             });
         });
     </script>

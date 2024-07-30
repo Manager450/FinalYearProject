@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from .models import Bus, Booking, Payment, Review, BusRoute, BusStop, Seat
 from .forms import BookingForm, ReviewForm, UserRegistrationForm, BusRouteForm
 from django.contrib.auth.decorators import login_required
@@ -8,6 +9,7 @@ from datetime import datetime
 from django.contrib import messages
 from .utils import generate_ticket, send_mticket
 from django.http import FileResponse, JsonResponse
+
 
 def home(request):
     return render(request, 'tickets/home.html')
@@ -47,21 +49,17 @@ def select_boarding_dropping_points(request, bus_id):
         form = BusRouteForm(request.POST)
         if form.is_valid():
             if not request.user.is_authenticated:
-                messages.info(request, "Please log in to complete your booking")
-                return redirect('login')
-
+                return JsonResponse({'success': False, 'errors': 'Please log in to complete your booking'})
             boarding_point = form.cleaned_data['boarding_point']
             dropping_point = form.cleaned_data['dropping_point']
-            return redirect('booking_summary', bus_id=bus.id, boarding_point_id=boarding_point.id, dropping_point_id=dropping_point.id)
+            return JsonResponse({'success': True, 'redirect_url': reverse('booking_summary', args=[bus_id, boarding_point.id, dropping_point.id])})
         else:
-            messages.error(request, "Please select valid boarding and dropping points")
+            return JsonResponse({'success': False, 'errors': form.errors})
     else:
         form = BusRouteForm()
-
-    form.fields['boarding_point'].queryset = BusStop.objects.filter(city=bus.source)
-    form.fields['dropping_point'].queryset = BusStop.objects.filter(city=bus.destination)
-
-    return render(request, 'tickets/select_boarding_dropping.html', {'form': form, 'bus': bus})
+        form.fields['boarding_point'].queryset = BusStop.objects.filter(city=bus.source)
+        form.fields['dropping_point'].queryset = BusStop.objects.filter(city=bus.destination)
+        return render(request, 'tickets/select_boarding_dropping.html', {'form': form, 'bus': bus})
 
 @login_required(login_url='/login/')
 def booking_summary(request, bus_id, boarding_point_id, dropping_point_id):
