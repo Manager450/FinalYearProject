@@ -52,7 +52,8 @@ def select_boarding_dropping_points(request, bus_id):
                 return JsonResponse({'success': False, 'errors': 'Please log in to complete your booking'})
             boarding_point = form.cleaned_data['boarding_point']
             dropping_point = form.cleaned_data['dropping_point']
-            return JsonResponse({'success': True, 'redirect_url': reverse('booking_summary', args=[bus_id, boarding_point.id, dropping_point.id])})
+            redirect_url = reverse('booking_summary', args=[bus_id, boarding_point.id, dropping_point.id])
+            return JsonResponse({'success': True, 'redirect_url': redirect_url})
         else:
             return JsonResponse({'success': False, 'errors': form.errors})
     else:
@@ -63,26 +64,26 @@ def select_boarding_dropping_points(request, bus_id):
 
 @login_required(login_url='/login/')
 def booking_summary(request, bus_id, boarding_point_id, dropping_point_id):
-    bus = get_object_or_404(Bus, id=bus_id)
-    boarding_point = get_object_or_404(BusStop, id=boarding_point_id)
-    dropping_point = get_object_or_404(BusStop, id=dropping_point_id)
-    seats = Seat.objects.filter(bus=bus, is_available=True)
-    if request.method == 'POST':
-        seat_id = request.POST.get('seat_id')
-        seat = get_object_or_404(Seat, id=seat_id)
-        booking = Booking.objects.create(
-            user=request.user,
-            bus=bus,
-            seat=seat,
-            seat_number=seat.seat_number,
-            boarding_point=boarding_point,
-            dropping_point=dropping_point
-        )
-        seat.is_available = False
-        seat.save()
-        return redirect('payment', booking_id=booking.id)
-    return render(request, 'tickets/booking_summary.html', {'bus': bus, 'boarding_point': boarding_point, 'dropping_point': dropping_point, 'seats': seats})
-
+       bus = get_object_or_404(Bus, id=bus_id)
+       boarding_point = get_object_or_404(BusStop, id=boarding_point_id)
+       dropping_point = get_object_or_404(BusStop, id=dropping_point_id)
+       seats = Seat.objects.filter(bus=bus)
+       if request.method == 'POST':
+           seat_id = request.POST.get('seat_id')
+           seat = get_object_or_404(Seat, id=seat_id)
+           booking = Booking.objects.create(
+               user=request.user,
+               bus=bus,
+               seat=seat,
+               seat_number=seat.seat_number,
+               boarding_point=boarding_point,
+               dropping_point=dropping_point
+           )
+           seat.is_available = False
+           seat.save()
+           return redirect('payment', booking_id=booking.id)
+       return render(request, 'tickets/booking_summary.html', {'bus': bus, 'boarding_point': boarding_point, 'dropping_point': dropping_point, 'seats': seats})
+   
 def bus_details(request, bus_id):
     bus = get_object_or_404(Bus, id=bus_id)
     return render(request, 'tickets/bus_details.html', {'bus': bus})

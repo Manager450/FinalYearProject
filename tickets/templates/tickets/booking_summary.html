@@ -6,6 +6,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Booking Summary</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        .seat-map {
+            display: flex;
+            flex-wrap: wrap;
+            width: 200px;
+        }
+        .seat {
+            width: 30px;
+            height: 30px;
+            margin: 5px;
+            text-align: center;
+            line-height: 30px;
+            border: 1px solid #ccc;
+        }
+        .available {
+            background-color: #7FFF00; /* Available seats in green */
+            cursor: pointer;
+        }
+        .booked {
+            background-color: #FF6347; /* Booked seats in red */
+            pointer-events: none;
+        }
+        .selected {
+            background-color: #0000FF; /* Selected seat in blue */
+        }
+    </style>
 </head>
 <body>
     <h1>Booking Summary</h1>
@@ -15,15 +41,25 @@
     <form method="post">
         {% csrf_token %}
         <h2>Select Seat</h2>
-        <ul>
+        <div class="seat-map">
             {% for seat in seats %}
-                <li>
-                    <input type="radio" id="seat_{{ seat.id }}" name="seat_id" value="{{ seat.id }}">
-                    <label for="seat_{{ seat.id }}">{{ seat.seat_number }}</label>
-                </li>
+                <div class="seat {% if not seat.is_available %}booked{% else %}available{% endif %}" data-seat-id="{{ seat.id }}">
+                    {{ seat.seat_number }}
+                </div>
             {% endfor %}
-        </ul>
+        </div>
+        <input type="hidden" name="seat_id" id="selected_seat_id">
         <button type="submit">Proceed to Payment</button>
     </form>
+    <script>
+        document.querySelectorAll('.seat.available').forEach(seat => {
+            seat.addEventListener('click', function() {
+                document.querySelectorAll('.seat').forEach(s => s.classList.remove('selected'));
+                seat.classList.add('selected');
+                document.getElementById('selected_seat_id').value = seat.getAttribute('data-seat-id');
+            });
+        });
+    </script>
 </body>
 </html>
+

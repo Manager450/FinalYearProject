@@ -1,5 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models.signals import  post_save
+from django.dispatch import receiver
+
 
 class BusOperator(models.Model):
     name = models.CharField(max_length=100)
@@ -18,12 +21,15 @@ class Bus(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     amenities = models.TextField()
     bus_type = models.CharField(max_length=50)  # Add this field
+    total_seats = models.IntegerField(default=40)  # Add this field
 
     def __str__(self):
-        return self.name
-     
+           return self.name
+
     def available_seats(self):
-        return self.seat_set.filter(is_available=True).count()
+           return self.seat_set.filter(is_available=True).count()
+   
+
 
 class BusStop(models.Model):
     name = models.CharField(max_length=100)
@@ -79,3 +85,10 @@ class Review(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.bus.name} - {self.rating}"
+
+@receiver(post_save, sender=Bus)
+def create_seats(sender, instance, created, **kwargs):
+       if created:
+           for i in range(1, instance.total_seats + 1):
+               seat_number = f'{i}'
+               Seat.objects.create(bus=instance, seat_number=seat_number)
