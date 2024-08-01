@@ -64,26 +64,30 @@ def select_boarding_dropping_points(request, bus_id):
 
 @login_required(login_url='/login/')
 def booking_summary(request, bus_id, boarding_point_id, dropping_point_id):
-       bus = get_object_or_404(Bus, id=bus_id)
-       boarding_point = get_object_or_404(BusStop, id=boarding_point_id)
-       dropping_point = get_object_or_404(BusStop, id=dropping_point_id)
-       seats = Seat.objects.filter(bus=bus)
-       if request.method == 'POST':
-           seat_id = request.POST.get('seat_id')
-           seat = get_object_or_404(Seat, id=seat_id)
-           booking = Booking.objects.create(
-               user=request.user,
-               bus=bus,
-               seat=seat,
-               seat_number=seat.seat_number,
-               boarding_point=boarding_point,
-               dropping_point=dropping_point
-           )
-           seat.is_available = False
-           seat.save()
-           return redirect('payment', booking_id=booking.id)
-       return render(request, 'tickets/booking_summary.html', {'bus': bus, 'boarding_point': boarding_point, 'dropping_point': dropping_point, 'seats': seats})
-   
+    bus = get_object_or_404(Bus, id=bus_id)
+    boarding_point = get_object_or_404(BusStop, id=boarding_point_id)
+    dropping_point = get_object_or_404(BusStop, id=dropping_point_id)
+    seats = Seat.objects.filter(bus=bus)
+    
+    if request.method == 'POST':
+        selected_seat_ids = request.POST.getlist('seat_ids')
+        selected_seat_ids = [int(seat_id) for seat_id in selected_seat_ids]
+        for seat_id in selected_seat_ids:
+            seat = get_object_or_404(Seat, id=seat_id)
+            Booking.objects.create(
+                user=request.user,
+                bus=bus,
+                seat=seat,
+                seat_number=seat.seat_number,
+                boarding_point=boarding_point,
+                dropping_point=dropping_point
+            )
+            seat.is_available = False
+            seat.save()
+        return redirect('payment', booking_id=booking.id)
+    
+    return render(request, 'tickets/booking_summary.html', {'bus': bus, 'boarding_point': boarding_point, 'dropping_point': dropping_point, 'seats': seats})
+
 def bus_details(request, bus_id):
     bus = get_object_or_404(Bus, id=bus_id)
     return render(request, 'tickets/bus_details.html', {'bus': bus})

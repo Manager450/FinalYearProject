@@ -40,24 +40,33 @@
     <p>Dropping Point: {{ dropping_point.name }}</p>
     <form method="post">
         {% csrf_token %}
-        <h2>Select Seat</h2>
         <div class="seat-map">
             {% for seat in seats %}
-                <div class="seat {% if not seat.is_available %}booked{% else %}available{% endif %}" data-seat-id="{{ seat.id }}">
+                <div class="seat {% if seat.is_available %}available{% else %}booked{% endif %}" data-seat-id="{{ seat.id }}">
                     {{ seat.seat_number }}
                 </div>
             {% endfor %}
         </div>
-        <input type="hidden" name="seat_id" id="selected_seat_id">
-        <button type="submit">Proceed to Payment</button>
+        <input type="hidden" name="seat_ids" id="seat_ids">
+        <button type="submit">Book Selected Seats</button>
     </form>
     <script>
-        document.querySelectorAll('.seat.available').forEach(seat => {
-            seat.addEventListener('click', function() {
-                document.querySelectorAll('.seat').forEach(s => s.classList.remove('selected'));
-                seat.classList.add('selected');
-                document.getElementById('selected_seat_id').value = seat.getAttribute('data-seat-id');
+        document.addEventListener('DOMContentLoaded', function() {
+            const seatMap = document.querySelector('.seat-map');
+            const seatIdsInput = document.getElementById('seat_ids');
+
+            seatMap.addEventListener('click', function(event) {
+                if (event.target.classList.contains('available')) {
+                    event.target.classList.toggle('selected');
+                    updateSelectedSeats();
+                }
             });
+
+            function updateSelectedSeats() {
+                const selectedSeats = seatMap.querySelectorAll('.seat.selected');
+                const selectedSeatIds = Array.from(selectedSeats).map(seat => seat.getAttribute('data-seat-id'));
+                seatIdsInput.value = selectedSeatIds.join(',');
+            }
         });
     </script>
 </body>

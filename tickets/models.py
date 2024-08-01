@@ -88,7 +88,7 @@ class Review(models.Model):
 
 @receiver(post_save, sender=Bus)
 def create_seats(sender, instance, created, **kwargs):
-       if created:
-           for i in range(1, instance.total_seats + 1):
-               seat_number = f'{i}'
-               Seat.objects.create(bus=instance, seat_number=seat_number)
+    if created:
+        for i in range(1, instance.total_seats + 1):
+            seat_number = f'{i}'
+            Seat.objects.create(bus=instance, seat_number=seat_number)
