@@ -32,24 +32,15 @@
             background-color: #0000FF; /* Selected seat in blue */
         }
     </style>
-</head>
-<body>
-    <h1>Booking Summary</h1>
-    <p>Bus: {{ bus.name }}</p>
-    <p>Boarding Point: {{ boarding_point.name }}</p>
-    <p>Dropping Point: {{ dropping_point.name }}</p>
-    <form method="post">
-        {% csrf_token %}
-        <div class="seat-map">
-            {% for seat in seats %}
-                <div class="seat {% if seat.is_available %}available{% else %}booked{% endif %}" data-seat-id="{{ seat.id }}">
-                    {{ seat.seat_number }}
-                </div>
-            {% endfor %}
-        </div>
-        <button type="submit">Book Selected Seats</button>
-    </form>
     <script>
+        // Add JavaScript to update the total price
+        function updateTotalPrice() {
+            const seatPrice = parseFloat(document.getElementById('seat_price').value);
+            const selectedSeats = document.querySelectorAll('.seat.selected').length;
+            const totalPrice = seatPrice * selectedSeats;
+            document.getElementById('total_price').innerText = `Total Price: GHS ${totalPrice.toFixed(2)}`;
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const seatMap = document.querySelector('.seat-map');
             const form = document.querySelector('form');
@@ -57,6 +48,7 @@
             seatMap.addEventListener('click', function(event) {
                 if (event.target.classList.contains('available')) {
                     event.target.classList.toggle('selected');
+                    updateTotalPrice();  // Update total price when seat selection changes
                 }
             });
 
@@ -72,5 +64,24 @@
             });
         });
     </script>
+</head>
+<body>
+    <h1>Booking Summary</h1>
+    <p>Bus: {{ bus.name }}</p>
+    <p>Boarding Point: {{ boarding_point.name }}</p>
+    <p>Dropping Point: {{ dropping_point.name }}</p>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" id="seat_price" value="{{ bus.price }}">
+        <div class="seat-map">
+            {% for seat in seats %}
+                <div class="seat {% if seat.is_available %}available{% else %}booked{% endif %}" data-seat-id="{{ seat.id }}">
+                    {{ seat.seat_number }}
+                </div>
+            {% endfor %}
+        </div>
+        <p id="total_price">Total Price: GHS 0.00</p>  <!-- Display total price -->
+        <button type="submit">Book Selected Seats</button>
+    </form>
 </body>
 </html>

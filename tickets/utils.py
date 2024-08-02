@@ -28,3 +28,10 @@ def generate_ticket(booking):
     p.save()
     buffer.seek(0)
     return buffer
+
+def process_mobile_money_payment(phone_number, amount):
+    # Placeholder for mobile money payment integration
+    # Implement the API call to your mobile money provider here
+    # Example: Call MTN MoMo API and return the status
+    # For now, we will assume the payment is always successful
+    return 'Success'

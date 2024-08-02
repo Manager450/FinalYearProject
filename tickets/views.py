@@ -7,7 +7,7 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.forms import AuthenticationForm
 from datetime import datetime
 from django.contrib import messages
-from .utils import generate_ticket, send_mticket
+from .utils import generate_ticket, send_mticket, process_mobile_money_payment
 from django.http import FileResponse, JsonResponse
 
 
@@ -65,26 +65,27 @@ def booking_summary(request, bus_id, boarding_point_id, dropping_point_id):
     bus = get_object_or_404(Bus, id=bus_id)
     boarding_point = get_object_or_404(BusStop, id=boarding_point_id)
     dropping_point = get_object_or_404(BusStop, id=dropping_point_id)
-    seats = Seat.objects.filter(bus=bus)
+    seats = Seat.objects.filter(bus=bus, is_available=True)
     
     if request.method == 'POST':
         selected_seat_ids = request.POST.getlist('seat_ids')
-        # Ensure each seat_id is properly stripped and converted to an integer
         selected_seat_ids = [int(seat_id.strip()) for seat_id in selected_seat_ids]
+        total_price = bus.price * len(selected_seat_ids)
+        
+        booking = Booking.objects.create(
+            user=request.user,
+            bus=bus,
+            boarding_point=boarding_point,
+            dropping_point=dropping_point
+        )
+        
         for seat_id in selected_seat_ids:
             seat = get_object_or_404(Seat, id=seat_id)
-            booking = Booking.objects.create(
-                user=request.user,
-                bus=bus,
-                seat=seat,
-                seat_number=seat.seat_number,
-                boarding_point=boarding_point,
-                dropping_point=dropping_point
-            )
+            booking.seats.add(seat)
             seat.is_available = False
             seat.save()
-        # Redirect to payment with the last booking's ID
-        return redirect('payment', booking_id=booking.id)
+        
+        return redirect('payment', booking_id=booking.id, total_price=total_price)
     
     return render(request, 'tickets/booking_summary.html', {'bus': bus, 'boarding_point': boarding_point, 'dropping_point': dropping_point, 'seats': seats})
 
@@ -108,14 +109,22 @@ def book_bus(request, bus_id):
     return render(request, 'tickets/book_bus.html', {'form': form, 'bus': bus})
 
 @login_required
-def payment(request, booking_id):
+def payment(request, booking_id, total_price):
     booking = get_object_or_404(Booking, id=booking_id)
+    
     if request.method == 'POST':
-        amount = booking.bus.price
-        # Here you would integrate payment processing logic
-        payment = Payment.objects.create(booking=booking, amount=amount, status='Success')
-        return redirect('payment_success', payment_id=payment.id)
-    return render(request, 'tickets/payment.html', {'booking': booking})
+        # Process Mobile Money Payment
+        phone_number = request.POST.get('phone_number')
+        payment_status = process_mobile_money_payment(phone_number, total_price)
+        
+        if payment_status == 'Success':
+            Payment.objects.create(booking=booking, amount=total_price, status='Success')
+            return redirect('payment_success', payment_id=booking.payment.id)
+        else:
+            messages.error(request, 'Payment failed. Please try again.')
+    
+    return render(request, 'tickets/payment.html', {'booking': booking, 'total_price': total_price})
+
 
 @login_required
 def payment_success(request, payment_id):
@@ -127,12 +136,11 @@ def payment_success(request, payment_id):
             buffer = generate_ticket(booking)
             return FileResponse(buffer, as_attachment=True, filename='ticket.pdf')
         elif 'send_sms' in request.POST:
-            phone_number = request.POST.get('phone_number', booking.user.profile.phone_number)  # Assume `User` model has a `profile` with `phone_number`
+            phone_number = request.POST.get('phone_number', booking.user.profile.phone_number)
             send_mticket(phone_number, booking)
             messages.success(request, "m-Ticket sent successfully!")
 
     return render(request, 'tickets/payment_success.html', {'payment': payment, 'booking': booking})
-
 
 @login_required
 def my_bookings(request):

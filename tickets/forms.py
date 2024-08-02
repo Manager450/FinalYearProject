@@ -18,7 +18,7 @@ class BusRouteForm(forms.Form):
 class BookingForm(forms.ModelForm):
     class Meta:
         model = Booking
-        fields = ['seat_number']
+        fields = ['seats']
 
 class ReviewForm(forms.ModelForm):
     class Meta:

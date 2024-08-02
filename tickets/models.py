@@ -58,14 +58,13 @@ class Seat(models.Model):
 class Booking(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     bus = models.ForeignKey(Bus, on_delete=models.CASCADE)
-    seat = models.ForeignKey(Seat, on_delete=models.CASCADE)
-    seat_number = models.CharField(max_length=5)
+    seats = models.ManyToManyField(Seat)
     booked_on = models.DateTimeField(auto_now_add=True)
     boarding_point = models.ForeignKey(BusStop, related_name='booking_boarding_point', on_delete=models.CASCADE, default=1)
     dropping_point = models.ForeignKey(BusStop, related_name='booking_dropping_point', on_delete=models.CASCADE, default=1)
 
     def __str__(self):
-        return f"{self.user.username} - {self.bus.name} - {self.seat.seat_number}"
+        return f"{self.user.username} - {self.bus.name}"
 
 class Payment(models.Model):
     booking = models.OneToOneField(Booking, on_delete=models.CASCADE)
