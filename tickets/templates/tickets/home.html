@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Home - BusTicketX</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,6 +14,7 @@
             height: 100vh;
             margin: 0;
             background-color: #f8f8f8;
+            overflow-x: hidden; /* Prevent horizontal scroll */
         }
         .hamburger {
             font-size: 30px;
@@ -23,23 +25,32 @@
             left: 20px;
         }
         .menu {
-            display: none;
+            display: flex;
             flex-direction: column;
-            position: absolute;
-            top: 50px;
-            left: 20px;
+            position: fixed;
+            top: 0;
+            left: -300px; /* Hide menu off-screen initially */
+            height: 100%;
+            width: 250px;
             background-color: white;
-            border: 1px solid #ccc;
+            border-right: 1px solid #ccc;
             padding: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            transition: left 0.3s ease; /* Smooth slide-in transition */
+            z-index: 1000;
         }
         .menu a {
             text-decoration: none;
             color: black;
-            padding: 5px 0;
+            padding: 10px 0;
+            display: flex;
+            align-items: center;
         }
         .menu a:hover {
             background-color: #f0f0f0;
+        }
+        .menu i {
+            margin-right: 10px;
         }
         .container {
             text-align: center;
@@ -76,22 +87,22 @@
     </style>
 </head>
 <body>
-    <div class="hamburger" onclick="toggleMenu()">☰</div>
+    <div class="hamburger" onclick="toggleMenu(event)">☰</div>
     <div class="menu" id="menu">
-        <a href="{% url 'home' %}">Home</a>
-        <a href="{% url 'my_bookings' %}">My Bookings</a>
-        <a href="{% url 'register' %}">Register</a>
-        <a href="{% url 'login' %}">Login</a>
-        <a href="{% url 'logout' %}">Logout</a>
-        <a href="{% url 'settings' %}">Settings</a>
-        <a href="{% url 'terms' %}">Terms and Conditions</a>
-        <a href="{% url 'help' %}">Help</a>
-        <a href="{% url 'faqs' %}">FAQs</a>
-        <a href="{% url 'about' %}">About</a>
+        <a href="{% url 'home' %}"><i class="fa fa-home"></i>Home</a>
+        <a href="{% url 'my_bookings' %}"><i class="fa fa-ticket-alt"></i>My Bookings</a>
+        <a href="{% url 'register' %}"><i class="fa fa-user-plus"></i>Register</a>
+        <a href="{% url 'login' %}"><i class="fa fa-sign-in-alt"></i>Login</a>
+        <a href="{% url 'logout' %}"><i class="fa fa-sign-out-alt"></i>Logout</a>
+        <a href="{% url 'settings' %}"><i class="fa fa-cog"></i>Settings</a>
+        <a href="{% url 'terms' %}"><i class="fa fa-file-alt"></i>Terms and Conditions</a>
+        <a href="{% url 'help' %}"><i class="fa fa-question-circle"></i>Help</a>
+        <a href="{% url 'faqs' %}"><i class="fa fa-info-circle"></i>FAQs</a>
+        <a href="{% url 'about' %}"><i class="fa fa-info"></i>About</a>
     </div>
     <h1>Welcome to BusTicketX</h1>
     <p>Your one-stop solution for easy and convenient bus ticket booking.</p>
-        <p>Find and book your bus tickets with just a few clicks.</p>
+    <p>Find and book your bus tickets with just a few clicks.</p>
     <div class="container">
         <h2>Online Bus Ticket Booking</h2>
         <form action="{% url 'search_results' %}" method="get">
@@ -115,14 +126,30 @@
     </div>
 
     <script>
-        function toggleMenu() {
+        function toggleMenu(event) {
             var menu = document.getElementById('menu');
-            if (menu.style.display === 'flex') {
-                menu.style.display = 'none';
+            if (menu.style.left === '0px') {
+                menu.style.left = '-300px';
+                document.removeEventListener('click', closeMenuOnClickOutside);
             } else {
-                menu.style.display = 'flex';
+                menu.style.left = '0px';
+                document.addEventListener('click', closeMenuOnClickOutside);
+            }
+            event.stopPropagation(); // Prevent the event from bubbling up to document
+        }
+
+        function closeMenuOnClickOutside(event) {
+            var menu = document.getElementById('menu');
+            if (!menu.contains(event.target)) {
+                menu.style.left = '-300px';
+                document.removeEventListener('click', closeMenuOnClickOutside);
             }
         }
+
+        // Stop propagation on menu clicks to prevent closing it when clicking inside the menu
+        document.getElementById('menu').addEventListener('click', function(event) {
+            event.stopPropagation();
+        });
     </script>
 </body>
 </html>

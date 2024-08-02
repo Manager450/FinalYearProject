@@ -47,28 +47,30 @@
                 </div>
             {% endfor %}
         </div>
-        <input type="hidden" name="seat_ids" id="seat_ids">
         <button type="submit">Book Selected Seats</button>
     </form>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const seatMap = document.querySelector('.seat-map');
-            const seatIdsInput = document.getElementById('seat_ids');
+            const form = document.querySelector('form');
 
             seatMap.addEventListener('click', function(event) {
                 if (event.target.classList.contains('available')) {
                     event.target.classList.toggle('selected');
-                    updateSelectedSeats();
                 }
             });
 
-            function updateSelectedSeats() {
+            form.addEventListener('submit', function(event) {
                 const selectedSeats = seatMap.querySelectorAll('.seat.selected');
-                const selectedSeatIds = Array.from(selectedSeats).map(seat => seat.getAttribute('data-seat-id'));
-                seatIdsInput.value = selectedSeatIds.join(',');
-            }
+                selectedSeats.forEach(seat => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'seat_ids';
+                    input.value = seat.getAttribute('data-seat-id');
+                    form.appendChild(input);
+                });
+            });
         });
     </script>
 </body>
 </html>
-

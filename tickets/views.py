@@ -53,9 +53,7 @@ def select_boarding_dropping_points(request, bus_id):
             boarding_point = form.cleaned_data['boarding_point']
             dropping_point = form.cleaned_data['dropping_point']
             redirect_url = reverse('booking_summary', args=[bus_id, boarding_point.id, dropping_point.id])
-            return JsonResponse({'success': True, 'redirect_url': redirect_url})
-        else:
-            return JsonResponse({'success': False, 'errors': form.errors})
+            return redirect(redirect_url)     
     else:
         form = BusRouteForm()
         form.fields['boarding_point'].queryset = BusStop.objects.filter(city=bus.source)
@@ -71,10 +69,11 @@ def booking_summary(request, bus_id, boarding_point_id, dropping_point_id):
     
     if request.method == 'POST':
         selected_seat_ids = request.POST.getlist('seat_ids')
-        selected_seat_ids = [int(seat_id) for seat_id in selected_seat_ids]
+        # Ensure each seat_id is properly stripped and converted to an integer
+        selected_seat_ids = [int(seat_id.strip()) for seat_id in selected_seat_ids]
         for seat_id in selected_seat_ids:
             seat = get_object_or_404(Seat, id=seat_id)
-            Booking.objects.create(
+            booking = Booking.objects.create(
                 user=request.user,
                 bus=bus,
                 seat=seat,
@@ -84,6 +83,7 @@ def booking_summary(request, bus_id, boarding_point_id, dropping_point_id):
             )
             seat.is_available = False
             seat.save()
+        # Redirect to payment with the last booking's ID
         return redirect('payment', booking_id=booking.id)
     
     return render(request, 'tickets/booking_summary.html', {'bus': bus, 'boarding_point': boarding_point, 'dropping_point': dropping_point, 'seats': seats})
