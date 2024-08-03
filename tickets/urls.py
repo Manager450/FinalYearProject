@@ -1,12 +1,15 @@
-from django.urls import path
+from django.urls import path, register_converter
+from .converters import DecimalConverter
 from . import views
+
+register_converter(DecimalConverter, 'decimal')
 
 urlpatterns = [
     path('', views.home, name='home'),
     path('search/', views.search_results, name='search_results'),
     path('bus/<int:bus_id>/', views.bus_details, name='bus_details'),
     path('book/', views.book_bus, name='book_bus'),
-    path('payment/<int:booking_id>/<int:total_price>/', views.payment, name='payment'),
+    path('payment/<int:booking_id>/<decimal:total_price>/', views.payment, name='payment'),
     path('payment_success/<int:payment_id>/', views.payment_success, name='payment_success'),
     path('my_bookings/', views.my_bookings, name='my_bookings'),
     path('booking/<int:booking_id>/', views.booking_details, name='booking_details'),
