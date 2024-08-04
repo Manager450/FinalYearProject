@@ -7,15 +7,20 @@
     <title>Booking Summary</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <style>
-        .seat-map {
+        .seat-map-container {
             display: flex;
-            flex-wrap: wrap;
-            width: 200px;
+            flex-direction: column;
+            align-items: center;
+        }
+        .seat-map {
+            display: grid;
+            grid-template-columns: repeat(2, 30px) 20px repeat(2, 30px); /* 2 seats, aisle, 2 seats */
+            gap: 5px;
+            margin-top: 20px;
         }
         .seat {
             width: 30px;
             height: 30px;
-            margin: 5px;
             text-align: center;
             line-height: 30px;
             border: 1px solid #ccc;
@@ -30,6 +35,18 @@
         }
         .selected {
             background-color: #0000FF; /* Selected seat in blue */
+        }
+        .seat-map-guide {
+            margin-top: 10px;
+        }
+        .seat-map-guide span {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            margin-right: 10px;
+            text-align: center;
+            line-height: 30px;
+            border: 1px solid #ccc;
         }
     </style>
     <script>
@@ -73,15 +90,23 @@
     <form method="post">
         {% csrf_token %}
         <input type="hidden" id="seat_price" value="{{ bus.price }}">
-        <div class="seat-map">
-            {% for seat in seats %}
-                <div class="seat {% if seat.is_available %}available{% else %}booked{% endif %}" data-seat-id="{{ seat.id }}">
-                    {{ seat.seat_number }}
-                </div>
-            {% endfor %}
+        <div class="seat-map-container">
+            <div class="seat-map">
+                {% for seat in seats %}
+                    <div class="seat {% if seat.is_available %}available{% else %}booked{% endif %}" data-seat-id="{{ seat.id }}">
+                        {{ seat.seat_number }}
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="seat-map-guide">
+                <span class="seat available">A</span> Available
+                <span class="seat booked">B</span> Booked
+                <span class="seat selected">S</span> Selected
+            </div>
         </div>
         <p id="total_price">Total Price: GHS 0.00</p>  <!-- Display total price -->
         <button type="submit">Book Selected Seats</button>
     </form>
 </body>
 </html>
+

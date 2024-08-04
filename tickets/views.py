@@ -65,8 +65,8 @@ def booking_summary(request, bus_id, boarding_point_id, dropping_point_id):
     bus = get_object_or_404(Bus, id=bus_id)
     boarding_point = get_object_or_404(BusStop, id=boarding_point_id)
     dropping_point = get_object_or_404(BusStop, id=dropping_point_id)
-    seats = Seat.objects.filter(bus=bus, is_available=True)
-    
+    seats = Seat.objects.filter(bus=bus)  # Fetch all seats
+
     if request.method == 'POST':
         selected_seat_ids = request.POST.getlist('seat_ids')
         selected_seat_ids = [int(seat_id.strip()) for seat_id in selected_seat_ids]

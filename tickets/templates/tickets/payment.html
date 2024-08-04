@@ -6,7 +6,7 @@
 </head>
 <body>
     <h1>Payment for Booking: {{ booking.bus.name }}</h1>
-    <p>Amount: {{ booking.bus.price }}</p>
+    <p>Amount: {{ total_price }}</p>
     <form method="post">
         {% csrf_token %}
         <button type="submit">Pay Now</button>
