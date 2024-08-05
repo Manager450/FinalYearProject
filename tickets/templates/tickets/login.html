@@ -1,13 +1,32 @@
-<h1>Login</h1>
-{% if messages %}
-<ul>{% for message in messages%}
-  <li>{{ message }}</li>
-  {% endfor %}
-</ul>
-{% endif %}
-<form method="post" action="{% url 'login' %}">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Login</button>
-  <p>Don't have an account? <a href="{% url 'register' %}">Register</a></p>
-</form>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  {% load static %}
+    <meta charset="UTF-8">
+    <title>Login - BusTicketX</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-form">
+            <h1>Login</h1>
+            {% if messages %}
+            <ul>{% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+            </ul>
+            {% endif %}
+            <form method="post" action="{% url 'login' %}">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit">Login</button>
+                <p>Don't have an account? <a href="{% url 'register' %}">Register</a></p>
+            </form>
+            <div class="social-login">
+                <button class="facebook-btn">Login with Facebook</button>
+                <button class="google-btn">Login with Google</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

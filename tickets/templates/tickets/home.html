@@ -14,7 +14,7 @@
             height: 100vh;
             margin: 0;
             background-color: #f8f8f8;
-            overflow-x: hidden; /* Prevent horizontal scroll */
+            overflow-x: hidden;
         }
         .hamburger {
             font-size: 30px;
@@ -29,14 +29,14 @@
             flex-direction: column;
             position: fixed;
             top: 0;
-            left: -300px; /* Hide menu off-screen initially */
+            left: -300px;
             height: 100%;
             width: 250px;
             background-color: white;
             border-right: 1px solid #ccc;
             padding: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            transition: left 0.3s ease; /* Smooth slide-in transition */
+            transition: left 0.3s ease;
             z-index: 1000;
         }
         .menu a {
@@ -84,6 +84,12 @@
         button:hover {
             background-color: #c0392b;
         }
+        .profile-icon {
+            font-size: 25px;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
     </style>
 </head>
 <body>
@@ -100,6 +106,9 @@
         <a href="{% url 'faqs' %}"><i class="fa fa-info-circle"></i>FAQs</a>
         <a href="{% url 'about' %}"><i class="fa fa-info"></i>About</a>
     </div>
+    <a href="{% url 'profile' %}" class="profile-icon">
+        <i class="fa fa-user"></i>
+    </a>
     <h1>Welcome to BusTicketX</h1>
     <p>Your one-stop solution for easy and convenient bus ticket booking.</p>
     <p>Find and book your bus tickets with just a few clicks.</p>
@@ -135,7 +144,7 @@
                 menu.style.left = '0px';
                 document.addEventListener('click', closeMenuOnClickOutside);
             }
-            event.stopPropagation(); // Prevent the event from bubbling up to document
+            event.stopPropagation();
         }
 
         function closeMenuOnClickOutside(event) {
@@ -146,7 +155,6 @@
             }
         }
 
-        // Stop propagation on menu clicks to prevent closing it when clicking inside the menu
         document.getElementById('menu').addEventListener('click', function(event) {
             event.stopPropagation();
         });

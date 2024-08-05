@@ -20,7 +20,10 @@ def generate_ticket(booking):
     p = canvas.Canvas(buffer, pagesize=letter)
     p.drawString(100, 750, f"Ticket for {booking.bus.name}")
     p.drawString(100, 730, f"Passenger: {booking.user.username}")
-    p.drawString(100, 710, f"Seat Number: {booking.seats}")
+    
+    seat_numbers = ", ".join([seat.seat_number for seat in booking.seats.all()])
+    p.drawString(100, 710, f"Seat Number(s): {seat_numbers}")
+    
     p.drawString(100, 690, f"Boarding Point: {booking.boarding_point}")
     p.drawString(100, 670, f"Dropping Point: {booking.dropping_point}")
     p.drawString(100, 650, f"Departure: {booking.bus.departure_time}")

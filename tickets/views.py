@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from .models import Bus, Booking, Payment, Review, BusRoute, BusStop, Seat
-from .forms import BookingForm, ReviewForm, UserRegistrationForm, BusRouteForm
+from .forms import BookingForm, ReviewForm, UserRegistrationForm, BusRouteForm, UserProfileForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.forms import AuthenticationForm
@@ -70,7 +70,7 @@ def booking_summary(request, bus_id, boarding_point_id, dropping_point_id):
     if request.method == 'POST':
         selected_seat_ids = request.POST.getlist('seat_ids')
         selected_seat_ids = [int(seat_id.strip()) for seat_id in selected_seat_ids]
-        total_price = bus.price * len(selected_seat_ids)
+        total_price = bus.price * len(selected_seat_ids)  # Correctly calculate total price
         
         booking = Booking.objects.create(
             user=request.user,
@@ -185,7 +185,18 @@ def user_logout(request):
 
 @login_required
 def profile(request):
-    return render(request, 'tickets/profile.html')
+    if request.method == 'POST':
+        user_form = UserProfileForm(request.POST, instance=request.user)
+        if user_form.is_valid():
+            user_form.save()
+            user_profile = request.user.profile
+            user_profile.phone_number = user_form.cleaned_data.get('phone_number')
+            user_profile.save()
+            return redirect('profile')
+    else:
+        user_form = UserProfileForm(instance=request.user)
+    
+    return render(request, 'tickets/profile.html', {'user_form': user_form})
 
 def about(request):
     return render(request, 'tickets/about.html')

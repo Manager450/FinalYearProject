@@ -6,7 +6,13 @@
 </head>
 <body>
     <h1>Profile</h1>
-    <p>Username: {{ user.username }}</p>
-    <p>Email: {{ user.email }}</p>
+    <form method="post">
+        {% csrf_token %}
+        <p>Username: <input type="text" name="username" value="{{ user.username }}" required></p>
+        <p>Email: <input type="email" name="email" value="{{ user.email }}" required></p>
+        <p>Phone Number: <input type="text" name="phone_number" value="{{ user.profile.phone_number }}"></p>
+        <button type="submit">Update Profile</button>
+    </form>
 </body>
 </html>
+

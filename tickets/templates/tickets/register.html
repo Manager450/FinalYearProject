@@ -1,16 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    {% load static %}
     <meta charset="UTF-8">
     <title>Register - BusTicketX</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 <body>
-    <h1>Register</h1>
-    <form method="post" action="{% url 'register' %}">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Register</button>
-        <p>Already have an account? <a href="{% url 'login' %}">Sign in</a></p>
-    </form>
+    <div class="auth-container">
+        <div class="auth-form">
+            <h1>Register</h1>
+            <form method="post" action="{% url 'register' %}">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit">Register</button>
+                <p>Already have an account? <a href="{% url 'login' %}">Sign in</a></p>
+            </form>
+            <div class="social-login">
+                <button class="facebook-btn">Login with Facebook</button>
+                <button class="google-btn">Login with Google</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

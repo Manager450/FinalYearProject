@@ -91,3 +91,10 @@ def create_seats(sender, instance, created, **kwargs):
         for i in range(1, instance.total_seats + 1):
             seat_number = f'{i}'
             Seat.objects.create(bus=instance, seat_number=seat_number)
+
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    phone_number = models.CharField(max_length=15, blank=True)
+
+    def __str__(self):
+        return self.user.username          

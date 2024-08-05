@@ -1,4 +1,4 @@
-from django.urls import path, register_converter
+from django.urls import include, path, register_converter
 from .converters import DecimalConverter
 from . import views
 
@@ -28,4 +28,5 @@ urlpatterns = [
     path('review/<int:bus_id>/', views.review_bus, name='review_bus'),
     path('ajax/boarding-points/', views.get_boarding_points, name='get_boarding_points'),
     path('ajax/dropping-points/', views.get_dropping_points, name='get_dropping_points'),
+    path('accounts/', include('allauth.urls')),
 ]
