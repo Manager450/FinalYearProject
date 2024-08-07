@@ -3,8 +3,8 @@ from django.urls import reverse
 from .models import Bus, Booking, Payment, Review, BusRoute, BusStop, Seat
 from .forms import BookingForm, ReviewForm, UserRegistrationForm, BusRouteForm, UserProfileForm
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import login, logout, authenticate
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth import login, logout, authenticate, update_session_auth_hash
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 from datetime import datetime
 from django.contrib import messages
 from .utils import generate_ticket, send_mticket, process_mobile_money_payment
@@ -185,6 +185,10 @@ def user_logout(request):
 
 @login_required
 def profile(request):
+    return render(request, 'tickets/profile.html')
+
+@login_required
+def edit_profile(request):
     if request.method == 'POST':
         user_form = UserProfileForm(request.POST, instance=request.user)
         if user_form.is_valid():
@@ -196,7 +200,23 @@ def profile(request):
     else:
         user_form = UserProfileForm(instance=request.user)
     
-    return render(request, 'tickets/profile.html', {'user_form': user_form})
+    return render(request, 'tickets/edit_profile.html', {'user_form': user_form})
+
+@login_required
+def change_password(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)  # Important!
+            messages.success(request, 'Your password was successfully updated!')
+            return redirect('profile')
+        else:
+            messages.error(request, 'Please correct the error below.')
+    else:
+        form = PasswordChangeForm(request.user)
+    
+    return render(request, 'tickets/change_password.html', {'form': form})
 
 def about(request):
     return render(request, 'tickets/about.html')

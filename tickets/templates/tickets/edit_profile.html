@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <title>Edit Profile - BusTicketX</title>
+    <link rel="stylesheet" href="{% static 'css/profilestyle.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h1>Edit Profile</h1>
+        <form method="post">
+            {% csrf_token %}
+            <p>Username: <input type="text" name="username" value="{{ user.username }}" required></p>
+            <p>Email: <input type="email" name="email" value="{{ user.email }}" required></p>
+            <p>Phone Number: <input type="text" name="phone_number" value="{{ user.profile.phone_number }}"></p>
+            <button type="submit">Update Profile</button>
+        </form>
+    </div>
+</body>
+</html>
