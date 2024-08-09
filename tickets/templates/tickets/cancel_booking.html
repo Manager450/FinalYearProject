@@ -1,0 +1,11 @@
+{% block content %}
+<h2>Cancel Booking</h2>
+
+<p>Are you sure you want to cancel your booking for {{ booking.bus }} on {{ booking.date }}?</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Yes, cancel my booking</button>
+    <a href="{% url 'cancel_booking_list' %}">No, go back</a>
+</form>
+{% endblock %}

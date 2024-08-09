@@ -1,0 +1,20 @@
+{% block content %}
+<h2>Your Active Bookings</h2>
+
+{% if bookings %}
+    <ul>
+        {% for booking in bookings %}
+            <li style="margin-bottom:15px;">
+                <a href="{% url 'booking_details' booking.id %}">{{ booking.bus.name }}</a>
+                <p>Seat: {{ seat_numbers }}</p>
+                <p>Booked On: {{ booking.booked_on }}</p>
+                <a href="{% url 'cancel_booking' booking.id %}">Cancel this booking</a>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>You have no active bookings.</p>
+{% endif %}
+
+<a href="{% url 'home' %}">Back to Homepage</a>
+{% endblock %}

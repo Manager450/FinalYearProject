@@ -1,0 +1,14 @@
+{% block content %}
+<h2>Cancellation Successful</h2>
+
+<p>{{ messages|safe }}</p> <!-- Display the message -->
+
+<p>You will be redirected shortly...</p>
+
+<script>
+    // Redirect after 3 seconds (3000 milliseconds)
+    setTimeout(function(){
+        window.location.href = "{% url 'cancel_booking_list' %}";
+    }, 3000);
+</script>
+{% endblock %}

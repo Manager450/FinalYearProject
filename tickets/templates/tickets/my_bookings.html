@@ -6,12 +6,50 @@
 </head>
 <body>
     <h1>My Bookings</h1>
-    {% for booking in bookings %}
-        <div>
-            <a href="{% url 'booking_details' booking.id %}">{{ booking.bus.name }}</a>
-            <p>Seat: {{ booking.seat_number }}</p>
-            <p>Booked On: {{ booking.booked_on }}</p>
-        </div>
-    {% endfor %}
+
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <h2>Active Bookings</h2>
+    {% if active_bookings %}
+        {% for booking in active_bookings %}
+            <div>
+                <a href="{% url 'booking_details' booking.id %}">{{ booking.bus.name }}</a>
+                <p>Seat: {{ booking.seat_number }}</p>
+                <p>Booked On: {{ booking.booked_on }}</p>
+                <form method="post" action="{% url 'clear_booking' booking.id %}">
+                    {% csrf_token %}
+                    <button type="submit">Clear</button>
+                </form>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No active bookings.</p>
+    {% endif %}
+
+    <h2>Cancelled Bookings</h2>
+    {% if cancelled_bookings %}
+        {% for booking in cancelled_bookings %}
+            <div>
+                <a href="{% url 'booking_details' booking.id %}">{{ booking.bus.name }}</a>
+                <p>Seat: {{ booking.seat_number }}</p>
+                <p>Booked On: {{ booking.booked_on }}</p>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No cancelled bookings.</p>
+    {% endif %}
+
+    {% if active_bookings or cancelled_bookings %}
+        <form method="post" action="{% url 'clear_all_bookings' %}">
+            {% csrf_token %}
+            <button type="submit">Clear All Bookings</button>
+        </form>
+    {% endif %}
 </body>
 </html>

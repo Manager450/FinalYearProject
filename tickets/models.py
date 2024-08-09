@@ -56,12 +56,17 @@ class Seat(models.Model):
         return f"{self.bus.name} - {self.seat_number}"
 
 class Booking(models.Model):
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('cancelled', 'Cancelled'),
+    ]
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     bus = models.ForeignKey(Bus, on_delete=models.CASCADE)
     seats = models.ManyToManyField(Seat)
     booked_on = models.DateTimeField(auto_now_add=True)
     boarding_point = models.ForeignKey(BusStop, related_name='booking_boarding_point', on_delete=models.CASCADE, default=1)
     dropping_point = models.ForeignKey(BusStop, related_name='booking_dropping_point', on_delete=models.CASCADE, default=1)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
 
     def __str__(self):
         return f"{self.user.username} - {self.bus.name}"

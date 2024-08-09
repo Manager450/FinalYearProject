@@ -3,13 +3,14 @@ from django.urls import reverse
 from .models import Bus, Booking, Payment, Review, BusRoute, BusStop, Seat
 from .forms import BookingForm, ReviewForm, UserRegistrationForm, BusRouteForm, UserProfileForm
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.contrib.auth import login, logout, authenticate, update_session_auth_hash
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 from datetime import datetime
 from django.contrib import messages
 from .utils import generate_ticket, send_mticket, process_mobile_money_payment
 from django.http import FileResponse, JsonResponse
-
+from django.core.mail import send_mail
 
 def home(request):
     return render(request, 'tickets/home.html')
@@ -89,6 +90,32 @@ def booking_summary(request, bus_id, boarding_point_id, dropping_point_id):
     
     return render(request, 'tickets/booking_summary.html', {'bus': bus, 'boarding_point': boarding_point, 'dropping_point': dropping_point, 'seats': seats})
 
+@login_required
+def cancel_booking_list(request):
+    bookings = Booking.objects.filter(user=request.user, status='active')
+    return render(request, 'tickets/cancel_booking_list.html', {'bookings': bookings})
+
+@login_required
+def cancel_booking(request, booking_id):
+    booking = get_object_or_404(Booking, id=booking_id, user=request.user)
+
+    if request.method == "POST":
+        # Update the booking status to 'cancelled'
+        booking.status = 'cancelled'
+        booking.save()
+
+        # Free up the seats associated with this booking
+        seats = booking.seats.all()
+        for seat in seats:
+            seat.is_available = True
+            seat.save()
+
+        messages.success(request, 'Your booking has been cancelled successfully.')
+
+        return render(request, 'tickets/cancel_confirmation.html')  
+
+    return render(request, 'tickets/cancel_booking.html', {'booking': booking})
+
 def bus_details(request, bus_id):
     bus = get_object_or_404(Bus, id=bus_id)
     return render(request, 'tickets/bus_details.html', {'bus': bus})
@@ -144,8 +171,25 @@ def payment_success(request, payment_id):
 
 @login_required
 def my_bookings(request):
-    bookings = Booking.objects.filter(user=request.user)
-    return render(request, 'tickets/my_bookings.html', {'bookings': bookings})
+    active_bookings = Booking.objects.filter(user=request.user, status='active')
+    cancelled_bookings = Booking.objects.filter(user=request.user, status='cancelled')
+    return render(request, 'tickets/my_bookings.html', {
+        'active_bookings': active_bookings,
+        'cancelled_bookings': cancelled_bookings,
+    })
+
+@login_required
+def clear_booking(request, booking_id):
+    booking = get_object_or_404(Booking, id=booking_id, user=request.user, status='active')
+    booking.delete()
+    messages.success(request, 'Booking cleared successfully.')
+    return redirect('my_bookings')
+
+@login_required
+def clear_all_bookings(request):
+    Booking.objects.filter(user=request.user).delete()
+    messages.success(request, 'All bookings cleared successfully.')
+    return redirect('my_bookings')
 
 @login_required
 def booking_details(request, booking_id):
@@ -263,3 +307,34 @@ def get_dropping_points(request):
     data = list(dropping_points.values('id', 'name'))
     return JsonResponse(data, safe=False)
 
+# Forgot Password
+def password_reset_request(request):
+    if request.method == "POST":
+        email = request.POST.get('email')
+        try:
+            user = User.objects.get(email=email)
+            # Send a simple email with the reset link (in this case, just a direct link)
+            reset_url = request.build_absolute_uri(reverse('password_reset_confirm'))
+            subject = "Password Reset Requested"
+            message = f"Click the link below to reset your password:\n\n{reset_url}"
+            send_mail(subject, message, 'from@example.com', [user.email], fail_silently=False)
+            messages.success(request, 'Password reset email sent!')
+        except User.DoesNotExist:
+            messages.error(request, 'No account found with this email.')
+        return redirect('login')
+    return render(request, 'tickets/password_reset.html')
+
+def password_reset_confirm(request):
+    if request.method == "POST":
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        try:
+            user = User.objects.get(email=email)
+            user.set_password(password)
+            user.save()
+            update_session_auth_hash(request, user)  # Keep the user logged in after password change
+            messages.success(request, 'Your password has been reset successfully!')
+            return redirect('login')
+        except User.DoesNotExist:
+            messages.error(request, 'No account found with this email.')
+    return render(request, 'tickets/password_reset_confirm.html')
