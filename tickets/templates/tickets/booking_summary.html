@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -55,7 +54,10 @@
         function updateTotalPrice() {
             const seatPrice = parseFloat(document.getElementById('seat_price').value);
             const selectedSeats = document.querySelectorAll('.seat.selected').length;
-            const totalPrice = seatPrice * selectedSeats;
+
+            // Ensure that the total price is set to 0.00 if no seats are selected
+            const totalPrice = selectedSeats > 0 ? seatPrice * selectedSeats : 0.00;
+
             document.getElementById('total_price').innerText = `Total Price: GHS ${totalPrice.toFixed(2)}`;
         }
 

@@ -6,12 +6,12 @@ from django.core.exceptions import ValidationError
 
 class BusRouteForm(forms.Form):
     boarding_point = forms.ModelChoiceField(
-        queryset=BusStop.objects.none(),
+        queryset=BusStop.objects.all(),
         widget=forms.RadioSelect,
         empty_label="Select Boarding Point"
     )
     dropping_point = forms.ModelChoiceField(
-        queryset=BusStop.objects.none(),
+        queryset=BusStop.objects.all(),
         widget=forms.RadioSelect,
         empty_label="Select Dropping Point"
     )
