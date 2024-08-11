@@ -60,7 +60,7 @@ def select_boarding_dropping_points(request, bus_id):
         form.fields['boarding_point'].queryset = BusStop.objects.filter(city=bus.source)
         form.fields['dropping_point'].queryset = BusStop.objects.filter(city=bus.destination)
         return render(request, 'tickets/select_boarding_dropping.html', {'form': form, 'bus': bus})
-
+    
 @login_required(login_url='/login/')
 def booking_summary(request, bus_id, boarding_point_id, dropping_point_id):
     bus = get_object_or_404(Bus, id=bus_id)

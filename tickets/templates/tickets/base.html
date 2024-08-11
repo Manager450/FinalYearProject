@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}BusTicketX{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <style>
+        .hamburger {
+            font-size: 30px;
+            cursor: pointer;
+            user-select: none;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+        .menu {
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: -300px;
+            height: 100%;
+            width: 250px;
+            background-color: white;
+            border-right: 1px solid #ccc;
+            padding: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            transition: left 0.3s ease;
+            z-index: 1000;
+        }
+        .menu a {
+            text-decoration: none;
+            color: black;
+            padding: 10px 0;
+            display: flex;
+            align-items: center;
+        }
+        .menu a:hover {
+            background-color: #f0f0f0;
+        }
+        .menu i {
+            margin-right: 10px;
+        }
+        .profile-icon {
+            font-size: 25px;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="hamburger" onclick="toggleMenu(event)">☰</div>
+    <div class="menu" id="menu">
+        <a href="{% url 'home' %}"><i class="fa fa-home"></i>Home</a>
+        <a href="{% url 'my_bookings' %}"><i class="fa fa-ticket-alt"></i>My Bookings</a>
+        <a href="{% url 'cancel_booking_list' %}"><i class="fa fa-times-circle"></i>Cancel Ticket</a>
+        <a href="{% url 'register' %}"><i class="fa fa-user-plus"></i>Register</a>
+        <a href="{% url 'login' %}"><i class="fa fa-sign-in-alt"></i>Login</a>
+        <a href="{% url 'logout' %}"><i class="fa fa-sign-out-alt"></i>Logout</a>
+        <a href="{% url 'settings' %}"><i class="fa fa-cog"></i>Settings</a>
+        <a href="{% url 'terms' %}"><i class="fa fa-file-alt"></i>Terms and Conditions</a>
+        <a href="{% url 'help' %}"><i class="fa fa-question-circle"></i>Help</a>
+        <a href="{% url 'faqs' %}"><i class="fa fa-info-circle"></i>FAQs</a>
+        <a href="{% url 'about' %}"><i class="fa fa-info"></i>About</a>
+    </div>
+
+    <a href="{% url 'profile' %}" class="profile-icon">
+        <i class="fa fa-user"></i>
+    </a>
+
+    <div>
+        {% block content %}{% endblock %}
+    </div>
+
+    <script>
+        function toggleMenu(event) {
+            var menu = document.getElementById('menu');
+            if (menu.style.left === '0px') {
+                menu.style.left = '-300px';
+                document.removeEventListener('click', closeMenuOnClickOutside);
+            } else {
+                menu.style.left = '0px';
+                document.addEventListener('click', closeMenuOnClickOutside);
+            }
+            event.stopPropagation();
+        }
+
+        function closeMenuOnClickOutside(event) {
+            var menu = document.getElementById('menu');
+            if (!menu.contains(event.target)) {
+                menu.style.left = '-300px';
+                document.removeEventListener('click', closeMenuOnClickOutside);
+            }
+        }
+        document.getElementById('menu').addEventListener('click', function(event) {
+            event.stopPropagation();
+        });
+    </script>
+</body>
+</html>
