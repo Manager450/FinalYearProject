@@ -68,6 +68,27 @@ def booking_summary(request, bus_id, boarding_point_id, dropping_point_id):
     dropping_point = get_object_or_404(BusStop, id=dropping_point_id)
     seats = Seat.objects.filter(bus=bus)  # Fetch all seats
 
+    # Determine the layout of the bus
+    total_seats = seats.count()
+    if total_seats == 45:
+        layout = {
+            'rows': 10,  # 10 rows of 4 seats (2 on each side)
+            'columns': 4,  # 4 seats per row (2 on each side)
+            'back_row': 5  # 5 seats in the back row
+        }
+    elif total_seats == 50:
+        layout = {
+            'rows': 11,  # 11 rows of 4 seats (2 on each side)
+            'columns': 4,  # 4 seats per row (2 on each side)
+            'back_row': 6  # 6 seats in the back row
+        }
+    else:
+        layout = {
+            'rows': total_seats // 4,  # Calculate rows based on total seats
+            'columns': 4,  # Assume 4 seats per row
+            'back_row': total_seats % 4  # The remaining seats in the back row
+        }
+
     if request.method == 'POST':
         selected_seat_ids = request.POST.getlist('seat_ids')
         selected_seat_ids = [int(seat_id.strip()) for seat_id in selected_seat_ids]
@@ -88,7 +109,13 @@ def booking_summary(request, bus_id, boarding_point_id, dropping_point_id):
         
         return redirect('payment', booking_id=booking.id, total_price=total_price)
     
-    return render(request, 'tickets/booking_summary.html', {'bus': bus, 'boarding_point': boarding_point, 'dropping_point': dropping_point, 'seats': seats})
+    return render(request, 'tickets/booking_summary.html', {
+        'bus': bus,
+        'boarding_point': boarding_point,
+        'dropping_point': dropping_point,
+        'seats': seats,
+        'layout': layout
+    })
 
 @login_required
 def cancel_booking_list(request):
