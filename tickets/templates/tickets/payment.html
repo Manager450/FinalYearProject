@@ -3,6 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <title>Payment - BusTicketX</title>
+    <style>
+        body{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        gap: 20px;
+      }
+
+      *{
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+      }
+        button {
+            padding: 10px 20px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #c0392b;
+        }
+    </style>
 </head>
 <body>
     <h1>Payment for Booking: {{ booking.bus.name }}</h1>
