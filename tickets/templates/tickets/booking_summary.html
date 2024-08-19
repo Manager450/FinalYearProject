@@ -6,58 +6,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Booking Summary</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
     <style>
         .seat-map-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-top: 20px;
         }
-
         .seat-map {
             display: grid;
             grid-template-columns: repeat(2, 30px) 20px repeat(2, 30px); /* 2 seats, aisle, 2 seats */
-            gap: 5px;
-            margin-bottom: 20px;
+            gap: 20px;
+            margin-top: 20px;
+            width: 60%;
+            justify-content: center;
         }
-
-        .back-row {
-            display: grid;
-            gap: 5px;
+        .seat-map .seat{
+            border-radius: 10px;
+            padding: 5px;
         }
-
         .seat {
             width: 30px;
             height: 30px;
             text-align: center;
             line-height: 30px;
             border: 1px solid #ccc;
+           
         }
-
-        .driver-seat {
-            grid-column: 1 / span 4;
-            background-color: #FFD700; /* Driver's seat in gold */
-            border: 1px solid #ccc;
-        }
-
         .available {
             background-color: #7FFF00; /* Available seats in green */
             cursor: pointer;
         }
-
         .booked {
             background-color: #FF6347; /* Booked seats in red */
             pointer-events: none;
         }
-
-        .selected {
+        .selected,.guide {
             background-color: #0000FF; /* Selected seat in blue */
         }
-
         .seat-map-guide {
             margin-top: 10px;
         }
-
         .seat-map-guide span {
             display: inline-block;
             width: 30px;
@@ -67,12 +56,21 @@
             line-height: 30px;
             border: 1px solid #ccc;
         }
+        .hd{
+            padding: 10px;
+            
+        }
     </style>
     <script>
+        // Add JavaScript to update the total price
         function updateTotalPrice() {
             const seatPrice = parseFloat(document.getElementById('seat_price').value);
             const selectedSeats = document.querySelectorAll('.seat.selected').length;
-            const totalPrice = selectedSeats > 0 ? seatPrice * selectedSeats : 0.00;
+
+            // Ensure that the total price is set to 0.00 if no seats are selected
+            // const totalPrice = selectedSeats > 0 ? seatPrice * selectedSeats : 0.00;
+            const totalPrice = selectedSeats * seatPrice
+
             document.getElementById('total_price').innerText = `Total Price: GHS ${totalPrice.toFixed(2)}`;
         }
 
@@ -83,7 +81,7 @@
             seatMap.addEventListener('click', function(event) {
                 if (event.target.classList.contains('available')) {
                     event.target.classList.toggle('selected');
-                    updateTotalPrice();
+                    updateTotalPrice();  // Update total price when seat selection changes
                 }
             });
 
@@ -98,53 +96,36 @@
                 });
             });
 
+            // Initial update of total price
             updateTotalPrice();
         });
     </script>
 </head>
 <body>
+    <div class="hd">
     <h1>Booking Summary</h1>
     <p>Bus: {{ bus.name }}</p>
     <p>Boarding Point: {{ boarding_point.name }}</p>
     <p>Dropping Point: {{ dropping_point.name }}</p>
+    </div>
     <form method="post">
         {% csrf_token %}
         <input type="hidden" id="seat_price" value="{{ bus.price }}">
         <div class="seat-map-container">
-            <!-- Driver's seat -->
-            <div class="seat driver-seat">D</div>
-
-            <!-- Main seating area -->
             <div class="seat-map">
                 {% for seat in seats %}
-                    {% if forloop.counter <= layout.rows * layout.columns %}
-                        <div class="seat {% if seat.is_available %}available{% else %}booked{% endif %}" data-seat-id="{{ seat.id }}">
-                            {{ seat.seat_number }}
-                        </div>
-                        {% if forloop.counter0|divisibleby:layout.columns %}
-                            <div style="grid-column: span 4;"></div>
-                        {% endif %}
-                    {% endif %}
+                    <div class="seat {% if seat.is_available %}available{% else %}booked{% endif %}" data-seat-id="{{ seat.id }}">
+                        {{ seat.seat_number }}
+                    </div>
                 {% endfor %}
             </div>
-
-            <!-- Back row -->
-            <div class="back-row" style="grid-template-columns: repeat('{{ layout.back_row }}, 30px');">
-                {% for seat in seats %}
-                    {% if forloop.counter > layout.rows * layout.columns %}
-                        <div class="seat {% if seat.is_available %}available{% else %}booked{% endif %}" data-seat-id="{{ seat.id }}">
-                            {{ seat.seat_number }}
-                        </div>
-                    {% endif %}
-                {% endfor %}
+            <div class="seat-map-guide">
+                <span class="seat available">A</span> Available
+                <span class="seat booked">B</span> Booked
+                <span class="seat guide">S</span> Selected
             </div>
         </div>
-        <div class="seat-map-guide">
-            <span class="seat available">A</span> Available
-            <span class="seat booked">B</span> Booked
-            <span class="seat selected">S</span> Selected
-        </div>
-        <p id="total_price">Total Price: GHS 0.00</p>
+        <p id="total_price">Total Price: GHS 0.00</p>  <!-- Display total price -->
         <button type="submit">Book Selected Seats</button>
     </form>
 </body>
