@@ -146,6 +146,8 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'your-email@example.com'
 EMAIL_HOST_PASSWORD = 'your-email-password'
 
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+
 TWILIO_ACCOUNT_SID = 'your-twilio-account-sid'
 TWILIO_AUTH_TOKEN = 'your-twilio-auth-token'
 TWILIO_PHONE_NUMBER = 'your-twilio-phone-number'
