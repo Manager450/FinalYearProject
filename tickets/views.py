@@ -46,6 +46,11 @@ def search_results(request):
 
 def select_boarding_dropping_points(request, bus_id):
     bus = get_object_or_404(Bus, id=bus_id)
+    bus_routes = BusRoute.objects.filter(bus=bus)
+
+    boarding_points = BusStop.objects.filter(id__in=bus_routes.values_list('boarding_point', flat=True))
+    dropping_points = BusStop.objects.filter(id__in=bus_routes.values_list('dropping_point', flat=True))
+
     if request.method == 'POST':
         form = BusRouteForm(request.POST)
         if form.is_valid():
@@ -57,8 +62,8 @@ def select_boarding_dropping_points(request, bus_id):
             return redirect(redirect_url)     
     else:
         form = BusRouteForm()
-        form.fields['boarding_point'].queryset = BusStop.objects.filter(city=bus.source)
-        form.fields['dropping_point'].queryset = BusStop.objects.filter(city=bus.destination)
+        form.fields['boarding_point'].queryset = boarding_points
+        form.fields['dropping_point'].queryset = dropping_points
         return render(request, 'tickets/select_boarding_dropping.html', {'form': form, 'bus': bus})
 
 @login_required(login_url='/login/')
@@ -68,53 +73,28 @@ def booking_summary(request, bus_id, boarding_point_id, dropping_point_id):
     dropping_point = get_object_or_404(BusStop, id=dropping_point_id)
     seats = Seat.objects.filter(bus=bus)  # Fetch all seats
 
-    # Determine the layout of the bus
-    total_seats = seats.count()
-    if total_seats == 45:
-        layout = {
-            'rows': 10,  # 10 rows of 4 seats (2 on each side)
-            'columns': 4,  # 4 seats per row (2 on each side)
-            'back_row': 5  # 5 seats in the back row
-        }
-    elif total_seats == 50:
-        layout = {
-            'rows': 11,  # 11 rows of 4 seats (2 on each side)
-            'columns': 4,  # 4 seats per row (2 on each side)
-            'back_row': 6  # 6 seats in the back row
-        }
-    else:
-        layout = {
-            'rows': total_seats // 4,  # Calculate rows based on total seats
-            'columns': 4,  # Assume 4 seats per row
-            'back_row': total_seats % 4  # The remaining seats in the back row
-        }
-
     if request.method == 'POST':
         selected_seat_ids = request.POST.getlist('seat_ids')
+
+        if not selected_seat_ids:  # If no seats are selected
+            return render(request, 'tickets/booking_summary.html', {
+                'bus': bus,
+                'boarding_point': boarding_point,
+                'dropping_point': dropping_point,
+                'seats': seats,
+                'error_message': 'Please select at least one seat.'
+            })
+
         selected_seat_ids = [int(seat_id.strip()) for seat_id in selected_seat_ids]
         total_price = bus.price * len(selected_seat_ids)  # Correctly calculate total price
-        
-        booking = Booking.objects.create(
-            user=request.user,
-            bus=bus,
-            boarding_point=boarding_point,
-            dropping_point=dropping_point
-        )
-        
-        for seat_id in selected_seat_ids:
-            seat = get_object_or_404(Seat, id=seat_id)
-            booking.seats.add(seat)
-            seat.is_available = False
-            seat.save()
-        
-        return redirect('payment', booking_id=booking.id, total_price=total_price)
-    
+
+        return redirect('payment',bus_id=bus.id, boarding_point_id=boarding_point_id, dropping_point_id=dropping_point_id, seat_ids=','.join(map(str, selected_seat_ids)), total_price=total_price)
+
     return render(request, 'tickets/booking_summary.html', {
         'bus': bus,
         'boarding_point': boarding_point,
         'dropping_point': dropping_point,
-        'seats': seats,
-        'layout': layout
+        'seats': seats
     })
 
 @login_required
@@ -163,23 +143,41 @@ def book_bus(request, bus_id):
     return render(request, 'tickets/book_bus.html', {'form': form, 'bus': bus})
 
 @login_required
-def payment(request, booking_id, total_price):
-    booking = get_object_or_404(Booking, id=booking_id)
+def payment(request, bus_id, boarding_point_id, dropping_point_id, seat_ids, total_price):
+    bus = get_object_or_404(Bus, id=bus_id)
+    boarding_point = get_object_or_404(BusStop, id=boarding_point_id)
+    dropping_point = get_object_or_404(BusStop, id=dropping_point_id)
+    seat_ids_list = [int(seat_id) for seat_id in seat_ids.split(',')]
+    seats = Seat.objects.filter(id__in=seat_ids_list)
     
+    booking = None  # Initialize booking variable
+
     if request.method == 'POST':
         # Process Mobile Money Payment
         phone_number = request.POST.get('phone_number')
         payment_status = process_mobile_money_payment(phone_number, total_price)
         
         if payment_status == 'Success':
+            booking = Booking.objects.create(
+                user=request.user,
+                bus=bus, 
+                boarding_point=boarding_point,
+                dropping_point=dropping_point
+            )
+            
+            for seat in seats:
+                booking.seats.add(seat)
+                seat.is_available = False
+                seat.save()
+
             Payment.objects.create(booking=booking, amount=total_price, status='Success')
-            return redirect('payment_success', payment_id=booking.payment.id)
+            return redirect('payment_success', payment_id=booking.id)  # Fix payment_id to booking.id
         else:
             messages.error(request, 'Payment failed. Please try again.')
     
+    # Render payment template with or without booking data
     return render(request, 'tickets/payment.html', {'booking': booking, 'total_price': total_price})
-
-
+    
 @login_required
 def payment_success(request, payment_id):
     payment = get_object_or_404(Payment, id=payment_id)

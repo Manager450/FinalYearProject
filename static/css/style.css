@@ -44,7 +44,7 @@ button {
     padding: 10px;
     font-size: 16px;
     color: #fff;
-    background-color: #007bff;
+    background-color: #e74c3c;
     border: none;
     border-radius: 5px;
     cursor: pointer;
@@ -52,7 +52,7 @@ button {
 }
 
 button:hover {
-    background-color: #0056b3;
+    background-color: #c0392b;
 }
 
 .boarding-point, .dropping-point {
@@ -79,5 +79,5 @@ button:hover {
 
 .boarding-point input[type="radio"]:checked + label, .dropping-point input[type="radio"]:checked + label {
     font-weight: bold;
-    color: #007bff;
+    color: #e74c3c ;
 }

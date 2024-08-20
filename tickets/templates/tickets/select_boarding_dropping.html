@@ -24,22 +24,17 @@
     </form>
     <script type="text/javascript">
         $(document).ready(function() {
-            // Prevent default form submission behavior and submit form using AJAX
             $('form').submit(function(e) {
                 e.preventDefault();
-                console.log('Form submission intercepted');
                 $.ajax({
                     type: 'POST',
                     url: '{% url "select_boarding_dropping" bus.id %}',
                     data: $(this).serialize(),
                     success: function(data) {
-                        //console.log('AJAX request successful', data);
                         if (data.success) {
-                            console.log('Redirecting to:', data.redirect_url);
                             window.location.href = data.redirect_url;
                         } else {
                             console.log('Errors:', data.errors);
-                            // Optionally handle form errors here
                         }
                     },
                     error: function(xhr, status, error) {

@@ -31,7 +31,6 @@
             text-align: center;
             line-height: 30px;
             border: 1px solid #ccc;
-           
         }
         .available {
             background-color: #7FFF00; /* Available seats in green */
@@ -58,7 +57,6 @@
         }
         .hd{
             padding: 10px;
-            
         }
     </style>
     <script>
@@ -66,11 +64,7 @@
         function updateTotalPrice() {
             const seatPrice = parseFloat(document.getElementById('seat_price').value);
             const selectedSeats = document.querySelectorAll('.seat.selected').length;
-
-            // Ensure that the total price is set to 0.00 if no seats are selected
-            // const totalPrice = selectedSeats > 0 ? seatPrice * selectedSeats : 0.00;
-            const totalPrice = selectedSeats * seatPrice
-
+            const totalPrice = selectedSeats * seatPrice;
             document.getElementById('total_price').innerText = `Total Price: GHS ${totalPrice.toFixed(2)}`;
         }
 
@@ -87,6 +81,12 @@
 
             form.addEventListener('submit', function(event) {
                 const selectedSeats = seatMap.querySelectorAll('.seat.selected');
+                if (selectedSeats.length === 0) {
+                    event.preventDefault(); // Prevent the form from being submitted
+                    alert('Please select at least one seat.');
+                    return; // Exit the function
+                }
+
                 selectedSeats.forEach(seat => {
                     const input = document.createElement('input');
                     input.type = 'hidden';
@@ -103,11 +103,15 @@
 </head>
 <body>
     <div class="hd">
-    <h1>Booking Summary</h1>
-    <p>Bus: {{ bus.name }}</p>
-    <p>Boarding Point: {{ boarding_point.name }}</p>
-    <p>Dropping Point: {{ dropping_point.name }}</p>
+        <h1>Booking Summary</h1>
+        <p>Bus: {{ bus.name }}</p>
+        <p>Boarding Point: {{ boarding_point.name }}</p>
+        <p>Dropping Point: {{ dropping_point.name }}</p>
     </div>
+    {% if error_message %}
+    <p style="color: red;">{{ error_message }}</p>
+    {% endif %}
+    
     <form method="post">
         {% csrf_token %}
         <input type="hidden" id="seat_price" value="{{ bus.price }}">
@@ -128,5 +132,5 @@
         <p id="total_price">Total Price: GHS 0.00</p>  <!-- Display total price -->
         <button type="submit">Book Selected Seats</button>
     </form>
-</body>
+</body>     
 </html>

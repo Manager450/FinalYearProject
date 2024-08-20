@@ -100,6 +100,29 @@
         .profile-icon:hover{
             background: #ccc;
         }
+        .profile-dropdown {
+            display: none;
+            position: absolute;
+            top: 40px;
+            right: 0;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            width: 200px;
+            z-index: 1000;
+        }
+        .profile-dropdown a {
+            display: block;
+            padding: 10px;
+            color: black;
+            text-decoration: none;
+        }
+        .profile-dropdown a:hover {
+            background-color: #f0f0f0;
+        }
+        .profile-dropdown i {
+            margin-right: 10px;
+        }
 
         .hamburger{
             display: flex;
@@ -131,11 +154,11 @@
             position: absolute;
             top: 0;
         }
+
     </style>
 </head>
 <body>
     <div class="nav">
-    <!-- <div class="hamburger" onclick="toggleMenu(event)">☰</div> -->
     <div class="hamburger" onclick="toggleMenu(event)">
         <span class="box"></span>
         <span class="box short"></span>
@@ -154,13 +177,19 @@
         <a href="{% url 'faqs' %}"><i class="fa fa-info-circle"></i>FAQs</a>
         <a href="{% url 'about' %}"><i class="fa fa-info"></i>About</a>
     </div>
-    <!-- <a href="{% url 'profile' %}" class="profile-icon">
-        <i class="fa fa-user"></i>
-    </a> -->
-    <button class="profile-icon">
-        <i class="fa fa-user"></i>
-    </button>
-    
+    <div class="profile-container">
+        <button class="profile-icon" onclick="toggleProfileMenu()">
+            <i class="fa fa-user"></i>
+        </button>
+        <div class="profile-dropdown" id="profileDropdown">
+            <a href="#"><i class="fa fa-user"></i>Username: {{ user.username }}</a>
+            <a href="#"><i class="fa fa-envelope"></i>Email: {{ user.email }}</a>
+            <a href="#"><i class="fa fa-phone"></i>Phone Number: {{ user.profile.phone_number }}</a>
+            <a href="{% url 'edit_profile' %}"><i class="fa fa-edit"></i>Edit Profile</a>
+            <a href="{% url 'change_password' %}"><i class="fa fa-key"></i>Change Password</a>
+            <a href="{% url 'logout' %}"><i class="fa fa-sign-out-alt"></i>Logout</a>
+        </div>
+    </div>   
 </div>
     <h1>Welcome to BusTicketX</h1>
     <p>Your one-stop solution for easy and convenient bus ticket booking.</p>
@@ -211,6 +240,24 @@
         document.getElementById('menu').addEventListener('click', function(event) {
             event.stopPropagation();
         });
+        function toggleProfileMenu() {
+        const profileDropdown = document.getElementById('profileDropdown');
+        if (profileDropdown.style.display === 'block') {
+            profileDropdown.style.display = 'none';
+            document.removeEventListener('click', closeProfileMenuOnClickOutside);
+        } else {
+            profileDropdown.style.display = 'block';
+            document.addEventListener('click', closeProfileMenuOnClickOutside);
+        }
+    }
+
+    function closeProfileMenuOnClickOutside(event) {
+        const profileDropdown = document.getElementById('profileDropdown');
+        if (!profileDropdown.contains(event.target) && !event.target.closest('.profile-icon')) {
+            profileDropdown.style.display = 'none';
+            document.removeEventListener('click', closeProfileMenuOnClickOutside);
+        }
+    }
     </script>
 </body>
 </html>
