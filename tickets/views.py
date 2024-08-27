@@ -12,7 +12,6 @@ from django.contrib import messages
 from .utils import generate_ticket, send_mticket, process_mobile_money_payment
 from django.http import FileResponse, JsonResponse
 from django.core.mail import send_mail
-from django_paystack.models import PaystackTransaction
 import time
 
 def home(request):
@@ -144,9 +143,7 @@ def book_bus(request, bus_id):
     else:
         form = BookingForm()
     return render(request, 'tickets/book_bus.html', {'form': form, 'bus': bus})
-
-paystack.api_key = settings.PAYSTACK_SECRET_KEY
-
+    
 @login_required
 def payment(request, bus_id, boarding_point_id, dropping_point_id, seat_ids, total_price):
     bus = get_object_or_404(Bus, id=bus_id)
@@ -158,71 +155,32 @@ def payment(request, bus_id, boarding_point_id, dropping_point_id, seat_ids, tot
     booking = None  # Initialize booking variable
 
     if request.method == 'POST':
-        # Extract phone number from POST data
+        # Process Mobile Money Payment
         phone_number = request.POST.get('phone_number')
-
-        # Initialize Paystack transaction
-        response = PaystackTransaction({
-            'reference': f"{request.user.id}-{int(time.time())}",
-            'amount': int(total_price * 100),  # Paystack expects amount in kobo
-            'email': request.user.email,
-            'currency': 'GHS',
-            'channels': ['mobile_money'],
-            'metadata': {
-                'phone_number': phone_number
-            },
-        })
-
-        if response['status']:
-            # Create booking and mark seats as unavailable if payment initialization is successful
+        payment_status = process_mobile_money_payment(phone_number, total_price)
+        
+        if payment_status == 'Success':
             booking = Booking.objects.create(
                 user=request.user,
                 bus=bus, 
                 boarding_point=boarding_point,
                 dropping_point=dropping_point
             )
-
+            
             for seat in seats:
                 booking.seats.add(seat)
                 seat.is_available = False
                 seat.save()
 
-            # Save the payment with 'Pending' status and reference
-            payment = Payment.objects.create(
-                booking=booking, 
-                amount=total_price, 
-                status='Pending',
-                reference=response['data']['reference']
-            )
+            payment = Payment.objects.create(booking=booking, amount=total_price, status='Success')
             
-            # Redirect to Paystack payment page
-            return redirect(response['data']['authorization_url'])
-
+            return redirect('payment_success', payment_id=payment.id)  # Fix payment_id to booking.id
         else:
-            messages.error(request, 'Payment initialization failed. Please try again.')
+            messages.error(request, 'Payment failed. Please try again.')
     
     # Render payment template with or without booking data
     return render(request, 'tickets/payment.html', {'booking': booking, 'total_price': total_price})
-
-@login_required
-def verify_payment(request, reference):
-    try:
-        payment = Payment.objects.get(reference=reference)
-        response = paystack.transaction.verify(reference)
-
-        if response['status'] and response['data']['status'] == 'success':
-            payment.status = 'Success'
-            payment.save()
-            return redirect('payment_success', payment_id=payment.id)
-
-        payment.status = 'Failed'
-        payment.save()
-        messages.error(request, 'Payment failed. Please try again.')
-        return redirect('payment', payment_id=payment.id)
-    except Payment.DoesNotExist:
-        messages.error(request, 'Payment record not found.')
-        return redirect('home')
-    
+          
 @login_required
 def payment_success(request, payment_id):
     payment = get_object_or_404(Payment, id=payment_id)

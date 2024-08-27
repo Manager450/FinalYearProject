@@ -41,7 +41,6 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.facebook',
     'allauth.socialaccount.providers.google',
-    'django_paystack',
 ]
 
 SITE_ID = 1
@@ -149,14 +148,9 @@ EMAIL_HOST_PASSWORD = 'your-email-password'
 
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 
-TWILIO_ACCOUNT_SID = 'US8f073b2a021bee6bcf32c177dee143dd'
-TWILIO_AUTH_TOKEN = 'your-twilio-auth-token'
-TWILIO_PHONE_NUMBER = 'your-twilio-phone-number'
-
-PAYSTACK_SETTINGS = {
-    'SECRET_KEY': 'sk_test_93657126b181498756483489c084170d9e11a313',
-    'PUBLIC_KEY': 'pk_test_9262d9856ec6b5bd2b3356c635ce94d75d06417a',
-}
+TWILIO_ACCOUNT_SID = 'ACf77b2cc978a5561a9e366c604bb1e60d'
+TWILIO_AUTH_TOKEN = '8a5a69b508b4b1e3f7e9400c933f0e37'
+TWILIO_PHONE_NUMBER = '+16196635919'
 
 SOCIALACCOUNT_PROVIDERS = {
     'facebook': {

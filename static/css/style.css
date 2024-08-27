@@ -1,5 +1,5 @@
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Poppins', sans-serif;
     background-color: #f5f5f5;
     margin: 0;
     padding: 0;
@@ -36,10 +36,12 @@ label {
 }
 
 input[type="radio"] {
+    font-family: 'Poppins', sans-serif;
     margin-right: 10px;
 }
 
 button {
+    font-family: 'Poppins', sans-serif;
     width: 100%;
     padding: 10px;
     font-size: 16px;
