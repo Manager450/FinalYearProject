@@ -67,6 +67,7 @@ class Booking(models.Model):
     boarding_point = models.ForeignKey(BusStop, related_name='booking_boarding_point', on_delete=models.CASCADE, default=1)
     dropping_point = models.ForeignKey(BusStop, related_name='booking_dropping_point', on_delete=models.CASCADE, default=1)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
+    cleared = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.user.username} - {self.bus.name}"
@@ -74,8 +75,9 @@ class Booking(models.Model):
 class Payment(models.Model):
     booking = models.OneToOneField(Booking, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+    reference = models.CharField(max_length=100, unique=True, null=True, blank=True)
     payment_date = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=20, choices=[('Success', 'Success'), ('Failed', 'Failed')])
+    status = models.CharField(max_length=20, choices=[('Pending', 'Pending'), ('Success', 'Success'), ('Failed', 'Failed')])
 
     def __str__(self):
         return f"{self.booking} - {self.status}"

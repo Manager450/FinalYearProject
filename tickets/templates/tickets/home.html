@@ -1,31 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home - BusTicketX</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap">
     <style>
-        *{
+        * {
             box-sizing: border-box;
-            
         }
+
         body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
+            font-family: 'Poppins', sans-serif;
+            padding-top: 80px;
             margin: 0;
             background-color: #f8f8f8;
             overflow-x: hidden;
+            color: #333;
         }
+
         .hamburger {
-           
-            /* position: absolute;
-            top: 20px;
-            left: 20px; */
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            width: 25px;
+            font-size: 30px;
+            cursor: pointer;
+            user-select: none;
         }
+
+        .hamburger .box {
+            width: 100%;
+            height: 2px;
+            border-radius: 10px;
+            background-color: #333;
+        }
+
+        .hamburger .short {
+            width: 60%;
+        }
+
         .menu {
             display: flex;
             flex-direction: column;
@@ -41,6 +57,7 @@
             transition: left 0.3s ease;
             z-index: 1000;
         }
+
         .menu a {
             text-decoration: none;
             color: black;
@@ -48,31 +65,40 @@
             display: flex;
             align-items: center;
         }
+
         .menu a:hover {
             background-color: #f0f0f0;
         }
+
         .menu i {
             margin-right: 10px;
         }
+
         .container {
             text-align: center;
             background-color: white;
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 20px auto;
+            max-width: 600px;
         }
+
         form {
             display: flex;
             flex-direction: column;
             gap: 10px;
         }
-        select, input[type="date"] {
+
+        select,
+        input[type="date"] {
             display: block;
             padding: 10px;
             width: 100%;
             border: 1px solid #ccc;
             border-radius: 5px;
         }
+
         button {
             padding: 10px 20px;
             background-color: #e74c3c;
@@ -81,25 +107,35 @@
             border-radius: 5px;
             cursor: pointer;
             margin-top: 10px;
+            text-decoration: none;
+            display: inline-block;
         }
+
         button:hover {
             background-color: #c0392b;
         }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 20px;
+            position: fixed;
+            top: 0;
+            background-color: #f8f8f8;
+        }
+
         .profile-icon {
-            padding: 5px;           
-            margin: 0;
             font-size: 20px;
-            /* position: absolute;
-            top: 20px;
-            right: 20px; */
             background: none;
             color: #333;
             border-radius: 50%;
             object-fit: cover;
+            display: inline-block;
+            padding: 5px;
         }
-        .profile-icon:hover{
-            background: #ccc;
-        }
+
         .profile-dropdown {
             display: none;
             position: absolute;
@@ -111,94 +147,175 @@
             width: 200px;
             z-index: 1000;
         }
+
         .profile-dropdown a {
             display: block;
             padding: 10px;
             color: black;
             text-decoration: none;
         }
+
         .profile-dropdown a:hover {
             background-color: #f0f0f0;
         }
-        .profile-dropdown i {
-            margin-right: 10px;
-        }
 
-        .hamburger{
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            width: 25px;
-            font-size: 30px;
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .hamburger .box{
-            width: 100%;
-            height: 2px;
-            border-radius: 10px;
-            background-color: #333;
-        }
-
-        .hamburger .short{
-            width: 60%;
-        }
-
-        .nav{
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
+        .information-section {
             padding: 20px;
-            position: absolute;
-            top: 0;
+            background-color: #ffffff;
+            margin: 20px 0;
+            border-top: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
         }
 
+        .information-section h2 {
+            margin-top: 0;
+        }
+
+        .information-section h2,
+        .information-section p {
+            margin-bottom: 10px;
+        }
+
+        .book-now-btn {
+            margin-bottom: 20px;
+            /* Add space below the button */
+        }
+
+        .section-divider {
+            border-top: 1px solid #ddd;
+            margin: 40px 0;
+        }
+
+        .faqs-section {
+            padding: 20px;
+            background-color: #ffffff;
+            margin: 20px 0;
+            border-top: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .faqs-section h2 {
+            margin-top: 0;
+
+        }
+
+        .faq-tabs {
+            display: flex;
+            justify-content: space-between;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .faq-tabs div.active {
+            border-bottom: 2px solid #e74c3c;
+        }
+
+        .faq-tabs div {
+            padding: 10px;
+            flex: 1;
+            text-align: center;
+            border-bottom: 2px solid transparent;
+        }
+
+        .faq-tabs div:hover {
+            border-bottom: 2px solid #e74c3c;
+        }
+
+        .faq-content {
+            display: none;
+        }
+
+        .faq-content.active {
+            display: block;
+        }
+
+        .faq-content p {
+            margin: 0;
+            cursor: pointer;
+            padding: 10px;
+            border-top: 1px solid #ddd;
+        }
+
+        .faq-content p:hover {
+            background-color: #f0f0f0;
+        }
+
+        .faq-content p .answer {
+            display: none;
+        }
+
+        .faq-content p.active .answer {
+            display: block;
+        }
+
+        .selectable-route {
+            color: #a0a0a0;
+            /* Ash color */
+            text-decoration: none;
+            /* Remove underline */
+            cursor: pointer;
+            display: inline-block;
+            margin: 5px 0;
+        }
+
+        .selectable-route:hover {
+            color: #000000;
+            /* Change color to black on hover */
+        }
+
+        .footer {
+            background-color: #ffffff;
+            border-top: 1px solid #ddd;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            bottom: 0;
+            width: 100%;
+        }
     </style>
 </head>
+
 <body>
     <div class="nav">
-    <div class="hamburger" onclick="toggleMenu(event)">
-        <span class="box"></span>
-        <span class="box short"></span>
-        <span class="box"></span>
-    </div>
-    <div class="menu" id="menu">
-        <a href="{% url 'home' %}"><i class="fa fa-home"></i>Home</a>
-        <a href="{% url 'my_bookings' %}"><i class="fa fa-ticket-alt"></i>My Bookings</a>
-        <a href="{% url 'cancel_booking_list' %}"><i class="fa fa-times-circle"></i>Cancel Ticket</a>
-        <a href="{% url 'register' %}"><i class="fa fa-user-plus"></i>Register</a>
-        <a href="{% url 'login' %}"><i class="fa fa-sign-in-alt"></i>Login</a>
-        <a href="{% url 'settings' %}"><i class="fa fa-cog"></i>Settings</a>
-        <a href="{% url 'terms' %}"><i class="fa fa-file-alt"></i>Terms and Conditions</a>
-        <a href="{% url 'help' %}"><i class="fa fa-question-circle"></i>Help</a>
-        <a href="{% url 'faqs' %}"><i class="fa fa-info-circle"></i>FAQs</a>
-        <a href="{% url 'about' %}"><i class="fa fa-info"></i>About</a>
-    </div>
-    <div class="profile-container">
-        {% if user.is_authenticated %}
-        <button class="profile-icon" onclick="toggleProfileMenu()">
-            <i class="fa fa-user"></i>
-        </button>
-        <div class="profile-dropdown" id="profileDropdown">
-            <a href="#"><i class="fa fa-user"></i>Username: {{ user.username }}</a>
-            <a href="#"><i class="fa fa-envelope"></i>Email: {{ user.email }}</a>
-            <a href="#"><i class="fa fa-phone"></i>Phone Number: {{ user.profile.phone_number }}</a>
-            <a href="{% url 'edit_profile' %}"><i class="fa fa-edit"></i>Edit Profile</a>
-            <a href="{% url 'change_password' %}"><i class="fa fa-key"></i>Change Password</a>
-            <a href="{% url 'logout' %}"><i class="fa fa-sign-out-alt"></i>Logout</a>
+        <div class="hamburger" onclick="toggleMenu(event)">
+            <span class="box"></span>
+            <span class="box short"></span>
+            <span class="box"></span>
         </div>
-        {% else %}
-        <a class="profile-icon" href="{% url 'login' %}">
-            <i class="fa fa-user"></i>
-        </a>
-        {% endif %}
-    </div>   
-</div>
-    <h1>Welcome to BusTicketX</h1>
-    <p>Your one-stop solution for easy and convenient bus ticket booking.</p>
-    <p>Find and book your bus tickets with just a few clicks.</p>
+        <div class="menu" id="menu">
+            <a href="{% url 'home' %}"><i class="fa fa-home"></i>Home</a>
+            <a href="{% url 'my_bookings' %}"><i class="fa fa-ticket-alt"></i>My Bookings</a>
+            <a href="{% url 'cancel_booking_list' %}"><i class="fa fa-times-circle"></i>Cancel Ticket</a>
+            <a href="{% url 'register' %}"><i class="fa fa-user-plus"></i>Register</a>
+            <a href="{% url 'login' %}"><i class="fa fa-sign-in-alt"></i>Login</a>
+            <a href="{% url 'settings' %}"><i class="fa fa-cog"></i>Settings</a>
+            <a href="{% url 'terms' %}"><i class="fa fa-file-alt"></i>Terms and Conditions</a>
+            <a href="{% url 'help' %}"><i class="fa fa-question-circle"></i>Help</a>
+            <a href="{% url 'faqs' %}"><i class="fa fa-info-circle"></i>FAQs</a>
+            <a href="{% url 'about' %}"><i class="fa fa-info"></i>About</a>
+        </div>
+        <div class="auth-buttons">
+            {% if user.is_authenticated %}
+            <button class="profile-icon" onclick="toggleProfileMenu()">
+                <i class="fa fa-user"></i>
+            </button>
+            <div class="profile-dropdown" id="profileDropdown">
+                <a href="#"><i class="fa fa-user"></i>Username: {{ user.username }}</a>
+                <a href="#"><i class="fa fa-envelope"></i>Email: {{ user.email }}</a>
+                <a href="#"><i class="fa fa-phone"></i>Phone Number: {{ user.profile.phone_number }}</a>
+                <a href="{% url 'edit_profile' %}"><i class="fa fa-edit"></i>Edit Profile</a>
+                <a href="{% url 'change_password' %}"><i class="fa fa-key"></i>Change Password</a>
+                <a href="{% url 'logout' %}"><i class="fa fa-sign-out-alt"></i>Logout</a>
+            </div>
+            {% else %}
+            <a href="{% url 'login' %}">Login</a>
+            <a href="{% url 'register' %}">Register</a>
+            {% endif %}
+        </div>
+    </div>
+    <h1 style="text-align: center;">Welcome to BusTicketX</h1>
+    <p style="text-align: center;">Your one-stop solution for easy and convenient bus ticket booking.</p>
+    <p style="text-align: center;">Find and book your bus tickets with just a few clicks.</p>
     <div class="container">
         <h2>Online Bus Ticket Booking</h2>
         <form action="{% url 'search_results' %}" method="get">
@@ -216,9 +333,79 @@
                 <option value="Tamale">Tamale</option>
                 <option value="Takoradi">Takoradi</option>
             </select>
-            <input type="date" name="date" required>
-            <button type="submit">Search</button>
+            <input type="date" name="travel_date" required>
+            <button type="submit">Search Buses</button>
         </form>
+    </div>
+
+    <div class="information-section">
+        <h2>Book Bus Ticket Online</h2>
+        <p>BusTicketX offers an easy-to-use online platform for bus ticket booking in Ghana. With a growing number of
+            bus operators and an intuitive booking process, BusTicketX makes road journeys convenient for travelers
+            across the country. Enjoy the ease of online bus ticket booking with a service dedicated to providing a
+            seamless travel experience.</p>
+
+        <h2>Bus Booking Deals on BusTicketX</h2>
+        <p>Don’t miss out on incredible offers. Book your bus tickets now and travel with convenience and affordability.
+            Grab the best bus booking deals before they’re gone!</p>
+        <button class="book-now-btn" onclick="window.location.href='/book-now'">Book Now</button>
+
+        <h2>Popular Bus Routes</h2>
+        <p>
+            <a href="#" class="selectable-route" onclick="selectRoute('Accra', 'Kumasi')">Accra To Kumasi</a> |
+            <a href="#" class="selectable-route" onclick="selectRoute('Accra', 'Cape Coast')">Accra To Cape Coast</a> |
+            <a href="#" class="selectable-route" onclick="selectRoute('Accra', 'Tamale')">Accra To Tamale</a> |
+            <a href="#" class="selectable-route" onclick="selectRoute('Accra', 'Takoradi')">Accra To Takoradi</a>
+        </p>
+    </div>
+    <div class="faqs-section">
+        <h2>FAQs on BusTicketX</h2>
+        <div class="faq-tabs">
+            <div data-target="general" class="active">General</div>
+            <div data-target="ticket">Ticket-related</div>
+            <div data-target="payment">Payment</div>
+            <div data-target="cancellation">Cancellation & Refund</div>
+        </div>
+        <div id="general" class="faq-content active">
+            <p onclick="toggleAnswer(this)">What is BusTicketX?
+                <span class="answer">BusTicketX is an online platform for booking bus tickets in Ghana.</span>
+            </p>
+            <p onclick="toggleAnswer(this)">How do I create an account?
+                <span class="answer">You can create an account by registering on our website.</span>
+            </p>
+        </div>
+        <div id="ticket" class="faq-content">
+            <p onclick="toggleAnswer(this)">How do I book a ticket?
+                <span class="answer">Search for buses, select your seats, and proceed with the booking.</span>
+            </p>
+            <p onclick="toggleAnswer(this)">Can I change my booking?
+                <span class="answer">Yes, you can modify your booking based on our policy.</span>
+            </p>
+        </div>
+        <div id="payment" class="faq-content">
+            <p onclick="toggleAnswer(this)">What payment methods are accepted?
+                <span class="answer">We accept various payment methods including mobile money.</span>
+            </p>
+            <p onclick="toggleAnswer(this)">Is my payment information secure?
+                <span class="answer">Yes, we use encryption to secure your payment information.</span>
+            </p>
+        </div>
+        <div id="cancellation" class="faq-content">
+            <p onclick="toggleAnswer(this)">How do I cancel my booking?
+                <span class="answer">Go to the 'Cancel Booking' section and select the booking you wish to
+                    cancel.</span>
+            </p>
+            <p onclick="toggleAnswer(this)">Can I get a refund?
+                <span class="answer">Refunds are subject to our cancellation policy.</span>
+            </p>
+        </div>
+    </div>
+
+
+    <div class="footer">
+        <p>&copy; 2024 BusTicketX. All rights reserved.</p>
+        <p><a href="{% url 'terms' %}">Terms and Conditions</a> | <a href="{% url 'privacy' %}">Privacy Policy</a></p>
+        <p>Contact us: <a href="mailto:support@busticketx.com">support@busticketx.com</a></p>
     </div>
 
     <script>
@@ -242,27 +429,50 @@
             }
         }
 
-        document.getElementById('menu').addEventListener('click', function(event) {
+        document.getElementById('menu').addEventListener('click', function (event) {
             event.stopPropagation();
         });
-        function toggleProfileMenu() {
-        const profileDropdown = document.getElementById('profileDropdown');
-        if (profileDropdown.style.display === 'block') {
-            profileDropdown.style.display = 'none';
-            document.removeEventListener('click', closeProfileMenuOnClickOutside);
-        } else {
-            profileDropdown.style.display = 'block';
-            document.addEventListener('click', closeProfileMenuOnClickOutside);
-        }
-    }
 
-    function closeProfileMenuOnClickOutside(event) {
-        const profileDropdown = document.getElementById('profileDropdown');
-        if (!profileDropdown.contains(event.target) && !event.target.closest('.profile-icon')) {
-            profileDropdown.style.display = 'none';
-            document.removeEventListener('click', closeProfileMenuOnClickOutside);
+        function toggleProfileMenu() {
+            const profileDropdown = document.getElementById('profileDropdown');
+            if (profileDropdown.style.display === 'block') {
+                profileDropdown.style.display = 'none';
+                document.removeEventListener('click', closeProfileMenuOnClickOutside);
+            } else {
+                profileDropdown.style.display = 'block';
+                document.addEventListener('click', closeProfileMenuOnClickOutside);
+            }
         }
-    }
+
+        function closeProfileMenuOnClickOutside(event) {
+            const profileDropdown = document.getElementById('profileDropdown');
+            if (!profileDropdown.contains(event.target) && !event.target.closest('.profile-icon')) {
+                profileDropdown.style.display = 'none';
+                document.removeEventListener('click', closeProfileMenuOnClickOutside);
+            }
+        }
+
+        document.querySelectorAll('.faq-tabs div').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.faq-tabs div').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.faq-content').forEach(content => content.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById(tab.getAttribute('data-target')).classList.add('active');
+            });
+        });
+
+        function toggleAnswer(element) {
+            element.classList.toggle('active');
+        }
+
+        function selectRoute(source, destination) {
+            document.getElementById('source').value = source;
+            document.getElementById('destination').value = destination;
+            // Redirect to the search form section
+            window.location.href = '#search-form'; // Adjust this ID based on your actual form section ID
+        }
     </script>
 </body>
+
 </html>

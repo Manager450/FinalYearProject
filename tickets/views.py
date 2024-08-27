@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
+from django.conf import settings
 from .models import Bus, Booking, Payment, Review, BusRoute, BusStop, Seat
 from .forms import BookingForm, ReviewForm, UserRegistrationForm, BusRouteForm, UserProfileForm
 from django.contrib.auth.decorators import login_required
@@ -11,6 +12,8 @@ from django.contrib import messages
 from .utils import generate_ticket, send_mticket, process_mobile_money_payment
 from django.http import FileResponse, JsonResponse
 from django.core.mail import send_mail
+from django_paystack.models import PaystackTransaction
+import time
 
 def home(request):
     return render(request, 'tickets/home.html')
@@ -142,6 +145,8 @@ def book_bus(request, bus_id):
         form = BookingForm()
     return render(request, 'tickets/book_bus.html', {'form': form, 'bus': bus})
 
+paystack.api_key = settings.PAYSTACK_SECRET_KEY
+
 @login_required
 def payment(request, bus_id, boarding_point_id, dropping_point_id, seat_ids, total_price):
     bus = get_object_or_404(Bus, id=bus_id)
@@ -153,30 +158,70 @@ def payment(request, bus_id, boarding_point_id, dropping_point_id, seat_ids, tot
     booking = None  # Initialize booking variable
 
     if request.method == 'POST':
-        # Process Mobile Money Payment
+        # Extract phone number from POST data
         phone_number = request.POST.get('phone_number')
-        payment_status = process_mobile_money_payment(phone_number, total_price)
-        
-        if payment_status == 'Success':
+
+        # Initialize Paystack transaction
+        response = PaystackTransaction({
+            'reference': f"{request.user.id}-{int(time.time())}",
+            'amount': int(total_price * 100),  # Paystack expects amount in kobo
+            'email': request.user.email,
+            'currency': 'GHS',
+            'channels': ['mobile_money'],
+            'metadata': {
+                'phone_number': phone_number
+            },
+        })
+
+        if response['status']:
+            # Create booking and mark seats as unavailable if payment initialization is successful
             booking = Booking.objects.create(
                 user=request.user,
                 bus=bus, 
                 boarding_point=boarding_point,
                 dropping_point=dropping_point
             )
-            
+
             for seat in seats:
                 booking.seats.add(seat)
                 seat.is_available = False
                 seat.save()
 
-            Payment.objects.create(booking=booking, amount=total_price, status='Success')
-            return redirect('payment_success', payment_id=booking.id)  # Fix payment_id to booking.id
+            # Save the payment with 'Pending' status and reference
+            payment = Payment.objects.create(
+                booking=booking, 
+                amount=total_price, 
+                status='Pending',
+                reference=response['data']['reference']
+            )
+            
+            # Redirect to Paystack payment page
+            return redirect(response['data']['authorization_url'])
+
         else:
-            messages.error(request, 'Payment failed. Please try again.')
+            messages.error(request, 'Payment initialization failed. Please try again.')
     
     # Render payment template with or without booking data
     return render(request, 'tickets/payment.html', {'booking': booking, 'total_price': total_price})
+
+@login_required
+def verify_payment(request, reference):
+    try:
+        payment = Payment.objects.get(reference=reference)
+        response = paystack.transaction.verify(reference)
+
+        if response['status'] and response['data']['status'] == 'success':
+            payment.status = 'Success'
+            payment.save()
+            return redirect('payment_success', payment_id=payment.id)
+
+        payment.status = 'Failed'
+        payment.save()
+        messages.error(request, 'Payment failed. Please try again.')
+        return redirect('payment', payment_id=payment.id)
+    except Payment.DoesNotExist:
+        messages.error(request, 'Payment record not found.')
+        return redirect('home')
     
 @login_required
 def payment_success(request, payment_id):
@@ -196,8 +241,8 @@ def payment_success(request, payment_id):
 
 @login_required
 def my_bookings(request):
-    active_bookings = Booking.objects.filter(user=request.user, status='active')
-    cancelled_bookings = Booking.objects.filter(user=request.user, status='cancelled')
+    active_bookings = Booking.objects.filter(user=request.user, status='active', cleared=False)
+    cancelled_bookings = Booking.objects.filter(user=request.user, status='cancelled', cleared=False)
     return render(request, 'tickets/my_bookings.html', {
         'active_bookings': active_bookings,
         'cancelled_bookings': cancelled_bookings,
@@ -206,14 +251,15 @@ def my_bookings(request):
 @login_required
 def clear_booking(request, booking_id):
     booking = get_object_or_404(Booking, id=booking_id, user=request.user, status='active')
-    booking.delete()
-    messages.success(request, 'Booking cleared successfully.')
+    booking.cleared = True
+    booking.save()
+    messages.success(request, 'Booking cleared from My Bookings successfully.')
     return redirect('my_bookings')
 
 @login_required
 def clear_all_bookings(request):
-    Booking.objects.filter(user=request.user).delete()
-    messages.success(request, 'All bookings cleared successfully.')
+    Booking.objects.filter(user=request.user).update(cleared=True)
+    messages.success(request, 'All bookings cleared from My Bookings successfully.')
     return redirect('my_bookings')
 
 @login_required
