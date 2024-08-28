@@ -9,6 +9,7 @@ from django.contrib.auth import login, logout, authenticate, update_session_auth
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 from datetime import datetime
 from django.contrib import messages
+from django.utils.dateparse import parse_date
 from .utils import generate_ticket, send_mticket, process_mobile_money_payment
 from django.http import FileResponse, JsonResponse
 from django.core.mail import send_mail
@@ -22,30 +23,36 @@ def search_results(request):
         source = request.GET.get('source')
         destination = request.GET.get('destination')
         date_str = request.GET.get('date')
-        if date_str:
-            travel_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-        else:
-            travel_date = None
+        
+        # Parse date_str to a date object or set to None if invalid
+        travel_date = parse_date(date_str) if date_str else None
+        
+        # Base query to filter buses by source and destination
         buses = Bus.objects.filter(source=source, destination=destination)
+        
+        # Further filter by travel date if provided
         if travel_date:
             buses = buses.filter(departure_time__date=travel_date)
-
-        buses = [bus for bus in buses if bus.available_seats() > 0]  
-        context = {
-                    'buses' : buses,
-                    'source': source,
-                    'destination': destination,
-                    'date' : travel_date,
-                }
-            
+        
+        # Filter buses to only those with available seats
+        buses = [bus for bus in buses if bus.available_seats() > 0]
+        
+        # Compute additional attributes for each bus
         for bus in buses:
             bus.travel_duration = (bus.arrival_time - bus.departure_time).total_seconds() // 3600
             bus.seats_available = Seat.objects.filter(bus=bus, is_available=True).count()
             bus.fare = bus.price
-
-
+        
+        # Context for rendering the template
+        context = {
+            'buses': buses,
+            'source': source,
+            'destination': destination,
+            'date': travel_date,
+        }
+        
         return render(request, 'tickets/search_results.html', context)
-
+    
 def select_boarding_dropping_points(request, bus_id):
     bus = get_object_or_404(Bus, id=bus_id)
     bus_routes = BusRoute.objects.filter(bus=bus)
@@ -129,20 +136,6 @@ def bus_details(request, bus_id):
     bus = get_object_or_404(Bus, id=bus_id)
     return render(request, 'tickets/bus_details.html', {'bus': bus})
 
-@login_required
-def book_bus(request, bus_id):
-    bus = get_object_or_404(Bus, id=bus_id)
-    if request.method == 'POST':
-        form = BookingForm(request.POST)
-        if form.is_valid():
-            booking = form.save(commit=False)
-            booking.user = request.user
-            booking.bus = bus
-            booking.save()
-            return redirect('payment', booking_id=booking.id)
-    else:
-        form = BookingForm()
-    return render(request, 'tickets/book_bus.html', {'form': form, 'bus': bus})
     
 @login_required
 def payment(request, bus_id, boarding_point_id, dropping_point_id, seat_ids, total_price):

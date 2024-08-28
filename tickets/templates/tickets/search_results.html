@@ -59,6 +59,7 @@
             border-radius: 5px;
             transition: background-color 0.3s ease;
             margin-bottom: 1rem;
+            text-align: left;
         }
 
         .bus-button:hover {
@@ -113,8 +114,8 @@
                 <div class="bus-result">
                     <a href="{% url 'select_boarding_dropping' bus.id %}" class="bus-button">
                         <div class="time">
-                            <span class="departure">{{ bus.departure_time }}</span> - 
-                            <span class="arrival">{{ bus.arrival_time }}</span>
+                            <span class="departure">{{ bus.departure_time|date:"H:i" }}</span> - 
+                            <span class="arrival">{{ bus.arrival_time|date:"H:i" }}</span>
                         </div>
                         <div class="duration-seats">
                             <span class="duration">{{ bus.travel_duration }} Hours</span> • 
@@ -125,7 +126,7 @@
                             <span class="bus-type">{{ bus.bus_type }}</span>
                         </div>
                         <div class="fare-rating">
-                            <span class="fare">From &#8373;{{ bus.fare }}</span>
+                            <span class="fare">From &#8373;{{ bus.fare|floatformat:2 }}</span>
                             <span class="rating">{{ bus.ratings }} ★</span>
                         </div>
                     </a>

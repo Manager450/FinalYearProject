@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import  post_save
 from django.dispatch import receiver
+from django.utils import timezone
 
 
 class BusOperator(models.Model):
@@ -28,6 +29,10 @@ class Bus(models.Model):
 
     def available_seats(self):
            return self.seat_set.filter(is_available=True).count()
+           
+    @classmethod
+    def clear_past_buses(cls):
+        cls.objects.filter(departure_time__lt=timezone.now()).delete()
    
 
 
@@ -98,6 +103,11 @@ def create_seats(sender, instance, created, **kwargs):
         for i in range(1, instance.total_seats + 1):
             seat_number = f'{i}'
             Seat.objects.create(bus=instance, seat_number=seat_number)
+
+# @receiver(post_save, sender=Bus) 
+# def clear_past_buses_on_save(sender, instance, **kwargs):
+#     Bus.clear_past_buses()
+
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
