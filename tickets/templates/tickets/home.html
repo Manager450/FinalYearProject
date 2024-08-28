@@ -433,7 +433,7 @@
                 <option value="Bolgatanga">Bolgatanga</option>
                 <option value="Wa">Wa</option>
             </select>
-            <input type="date" name="travel_date" required>
+            <input type="date" id="travel_date" name="travel_date" required>
             <button type="submit">Search Buses</button>
         </form>
     </div>
@@ -568,6 +568,13 @@
     </div> -->
 
     <script>
+         document.addEventListener('DOMContentLoaded', function() {
+            // Get today's date
+            const today = new Date().toISOString().split('T')[0];
+            // Set the min attribute of the date input field
+            document.getElementById('travel_date').setAttribute('min', today);
+        });
+
         document.getElementById('chatbot-button').addEventListener('click', function () {
             // Replace this with the actual code to open your chatbot
             alert('Chatbot will open here!');

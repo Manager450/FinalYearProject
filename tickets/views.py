@@ -9,6 +9,7 @@ from django.contrib.auth import login, logout, authenticate, update_session_auth
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 from datetime import datetime
 from django.contrib import messages
+from django.utils import timezone
 from django.utils.dateparse import parse_date
 from .utils import generate_ticket, send_mticket, process_mobile_money_payment
 from django.http import FileResponse, JsonResponse
@@ -16,23 +17,31 @@ from django.core.mail import send_mail
 import time
 
 def home(request):
-    return render(request, 'tickets/home.html')
+    today_date = timezone.now().date()
+    return render(request, 'tickets/home.html', {'today_date': today_date})
 
 def search_results(request):
+    # Clear past buses
+    Bus.clear_past_buses()
+    
     if request.method == 'GET':
         source = request.GET.get('source')
         destination = request.GET.get('destination')
-        date_str = request.GET.get('date')
+        date_str = request.GET.get('travel_date')  # Use 'travel_date' to match the form field name
         
         # Parse date_str to a date object or set to None if invalid
         travel_date = parse_date(date_str) if date_str else None
         
+        # If travel_date is None, it means the date was invalid or not provided
+        if travel_date is None:
+            messages.error(request, "Invalid travel date. Please enter a valid date.")
+            return redirect('home')  # Redirect back to the home page or show an error page
+        
         # Base query to filter buses by source and destination
         buses = Bus.objects.filter(source=source, destination=destination)
         
-        # Further filter by travel date if provided
-        if travel_date:
-            buses = buses.filter(departure_time__date=travel_date)
+        # Further filter by travel date
+        buses = buses.filter(departure_time__date=travel_date)
         
         # Filter buses to only those with available seats
         buses = [bus for bus in buses if bus.available_seats() > 0]
