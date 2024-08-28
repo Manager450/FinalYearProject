@@ -11,4 +11,81 @@
         window.location.href = "{% url 'cancel_booking_list' %}";
     }, 3000);
 </script>
-{% endblock %}
+{% endblock %}<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cancellation Successful - BusTicketX</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+            text-align: center;
+        }
+
+        header {
+            padding: 1rem;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        .main-content {
+            padding: 2rem;
+            margin: 0 auto;
+            max-width: 600px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        p {
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .back-link {
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .back-link a {
+            color: #007BFF;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>BusTicketX</h1>
+    </header>
+
+    <main class="main-content">
+        <h2>Cancellation Successful</h2>
+
+        <p>{{ messages|safe }}</p> <!-- Display the message -->
+
+        <p>You will be redirected shortly...</p>
+
+        <script>
+            // Redirect after 3 seconds (3000 milliseconds)
+            setTimeout(function(){
+                window.location.href = "{% url 'cancel_booking_list' %}";
+            }, 3000);
+        </script>
+    </main>
+</body>
+</html>

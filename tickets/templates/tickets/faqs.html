@@ -2,10 +2,176 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FAQs - BusTicketX</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        header {
+            padding: 1rem;
+            text-align: center;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            margin: 0;
+        }
+
+        main {
+            padding: 2rem;
+            margin: 0 auto;
+            max-width: 800px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .faq-section {
+            margin-bottom: 2rem;
+        }
+
+        .faq-section h2 {
+            border-bottom: 2px solid #333;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .faq-content p {
+            cursor: pointer;
+            margin: 0;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #fafafa;
+        }
+
+        .faq-content p:hover {
+            background-color: #f0f0f0;
+        }
+
+        .answer {
+            display: none;
+            padding-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .faq-content p.active .answer {
+            display: block;
+        }
+
+        .back-link {
+            display: block;
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .back-link a {
+            color: #007BFF;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+    <script>
+        function toggleAnswer(element) {
+            const answer = element.querySelector('.answer');
+            answer.style.display = answer.style.display === 'block' ? 'none' : 'block';
+        }
+    </script>
 </head>
 <body>
-    <h1>Frequently Asked Questions</h1>
-    <p>FAQs content.</p>
+    <header>
+        <h1>Frequently Asked Questions</h1>
+    </header>
+
+    <main>
+        <section class="faq-section">
+            <h2>General Questions</h2>
+            <div id="general" class="faq-content">
+                <p onclick="toggleAnswer(this)">What is BusTicketX?
+                    <span class="answer">BusTicketX is an online platform for booking bus tickets in Ghana.</span>
+                </p>
+                <p onclick="toggleAnswer(this)">How do I create an account?
+                    <span class="answer">You can create an account by registering on our website.</span>
+                </p>
+                <p onclick="toggleAnswer(this)">How do I reset my password?
+                    <span class="answer">You can reset your password using the "Forgot Password" link on the login page.</span>
+                </p>
+                <p onclick="toggleAnswer(this)">How can I update my profile information?
+                    <span class="answer">Log in to your account, go to the "Profile" section, and update your details.</span>
+                </p>
+            </div>
+        </section>
+
+        <section class="faq-section">
+            <h2>Booking Questions</h2>
+            <div id="ticket" class="faq-content">
+                <p onclick="toggleAnswer(this)">How do I book a ticket?
+                    <span class="answer">Search for buses, select your seats, and proceed with the booking.</span>
+                </p>
+                <p onclick="toggleAnswer(this)">Can I change my booking?
+                    <span class="answer">Yes, you can modify your booking based on our policy.</span>
+                </p>
+                <p onclick="toggleAnswer(this)">Can I book tickets for others?
+                    <span class="answer">Yes, you can book tickets for other passengers during the booking process.</span>
+                </p>
+                <p onclick="toggleAnswer(this)">What should I do if I miss my bus?
+                    <span class="answer">Contact our support team to discuss possible options or alternatives.</span>
+                </p>
+            </div>
+        </section>
+
+        <section class="faq-section">
+            <h2>Payment Questions</h2>
+            <div id="payment" class="faq-content">
+                <p onclick="toggleAnswer(this)">What payment methods are accepted?
+                    <span class="answer">We accept various payment methods including mobile money.</span>
+                </p>
+                <p onclick="toggleAnswer(this)">Is my payment information secure?
+                    <span class="answer">Yes, we use encryption to secure your payment information.</span>
+                </p>
+                <p onclick="toggleAnswer(this)">Can I get a receipt for my payment?
+                    <span class="answer">Yes, a receipt will be sent to your email address after successful payment.</span>
+                </p>
+                <p onclick="toggleAnswer(this)">What should I do if my payment fails?
+                    <span class="answer">Contact our support team if you encounter any issues with payment transactions.</span>
+                </p>
+            </div>
+        </section>
+
+        <section class="faq-section">
+            <h2>Cancellation Questions</h2>
+            <div id="cancellation" class="faq-content">
+                <p onclick="toggleAnswer(this)">How do I cancel my booking?
+                    <span class="answer">Go to the 'Cancel Booking' section and select the booking you wish to cancel.</span>
+                </p>
+                <p onclick="toggleAnswer(this)">Can I get a refund?
+                    <span class="answer">Refunds are subject to our cancellation policy.</span>
+                </p>
+                <p onclick="toggleAnswer(this)">How long does it take to process a refund?
+                    <span class="answer">Refunds typically take 5-7 business days to process, depending on your payment method.</span>
+                </p>
+                <p onclick="toggleAnswer(this)">Can I reschedule my booking instead of canceling?
+                    <span class="answer">Yes, rescheduling options are available according to our policies.</span>
+                </p>
+            </div>
+        </section>
+
+        <section class="back-link">
+            <a href="/">Back to Homepage</a>
+        </section>
+    </main>
 </body>
 </html>

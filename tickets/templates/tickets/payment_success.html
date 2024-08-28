@@ -3,61 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <title>Payment Success - BusTicketX</title>
-
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap">
     <style>
-      body{
-        font-family: 'Poppins', sans-serif;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        gap: 20px;
-      }
+        body {
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+            margin: 0;
+        }
 
-      *{
-        padding: 0;
-        margin: 0;
-        box-sizing: border-box;
-      }
-      button {
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        form {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        button {
             padding: 10px 20px;
-            background-color: #e74c3c;
+            background-color: #007BFF; /* Updated button color */
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+            display: block;
+            width: 100%;
             margin-top: 10px;
         }
-        button:hover {
-            background-color: #c0392b;
-        }
-      input{
-        font-family: 'Poppins', sans-serif;
-        padding: 5px;
-        border: solid 1px black;
-        border-radius: 5px;
-      }
-      .alt{
-        display: flex;
-        align-items: center;
-        text-transform: uppercase;
-        gap: 10px;
-      }
 
-      .alt hr{
-        width: 50px;
-        height: 1px;
-      }
-      a {
-      color: #e74c3c; /* Your primary color */
-      text-decoration: none;
-      }
-  
-     a:hover {
-      text-decoration: underline;
-      }
-  
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        input {
+            font-family: 'Poppins', sans-serif;
+            padding: 5px;
+            border: solid 1px #ccc;
+            border-radius: 5px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .alt {
+            display: flex;
+            align-items: center;
+            text-transform: uppercase;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .alt hr {
+            width: 50px;
+            height: 1px;
+            border: none;
+            background: #ccc;
+        }
+
+        a {
+            color: #007BFF; /* Updated link color */
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -66,18 +100,18 @@
     <form method="post">
         {% csrf_token %}
         <button type="submit" name="download">Download Ticket</button>
-      </form>
+    </form>
     <div class="alt">
-      <hr>
-      <p>or</p>
-      <hr>
+        <hr>
+        <p>or</p>
+        <hr>
     </div>
-      <form method="post">
+    <form method="post">
         {% csrf_token %}
         <label for="phone_number">Send m-Ticket to:</label>
         <input type="text" id="phone_number" name="phone_number" value="{{ booking.user.profile.phone_number }}">
         <button type="submit" name="send_sms">Send m-Ticket</button>
-      </form>
-      <a href="{% url 'home' %}">Back to Homepage</a>
+    </form>
+    <a href="{% url 'home' %}">Back to Homepage</a>
 </body>
 </html>

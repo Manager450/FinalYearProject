@@ -2,10 +2,120 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Terms and Conditions - BusTicketX</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        header {
+            padding: 1rem;
+            text-align: center;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            margin: 0;
+        }
+
+        main {
+            padding: 2rem;
+            margin: 0 auto;
+            max-width: 800px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            border-bottom: 2px solid #333;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        a {
+            color: #007BFF;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .back-link {
+            display: block;
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .back-link a {
+            color: #007BFF;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
-    <h1>Terms and Conditions</h1>
-    <p>Terms and conditions content.</p>
+    <header>
+        <h1>Terms and Conditions</h1>
+    </header>
+
+    <main>
+        <section>
+            <h2>Introduction</h2>
+            <p>Welcome to BusTicketX. These Terms and Conditions outline the rules and regulations for the use of BusTicketX's services. By accessing or using our services, you agree to comply with and be bound by these terms.</p>
+        </section>
+
+        <section>
+            <h2>Acceptance of Terms</h2>
+            <p>By using our website and services, you acknowledge that you have read, understood, and agreed to these Terms and Conditions. If you do not agree to these terms, please do not use our services.</p>
+        </section>
+
+        <section>
+            <h2>Changes to Terms</h2>
+            <p>BusTicketX reserves the right to update or modify these Terms and Conditions at any time without prior notice. Your continued use of our services following any changes constitutes acceptance of the new terms.</p>
+        </section>
+
+        <section>
+            <h2>User Responsibilities</h2>
+            <p>You are responsible for maintaining the confidentiality of your account information and for all activities that occur under your account. You agree to notify us immediately of any unauthorized use of your account.</p>
+        </section>
+
+        <section>
+            <h2>Booking and Cancellation</h2>
+            <p>All bookings made through our platform are subject to our booking policies. You may cancel your booking in accordance with the cancellation terms specified at the time of booking.</p>
+        </section>
+
+        <section>
+            <h2>Limitation of Liability</h2>
+            <p>BusTicketX shall not be liable for any direct, indirect, incidental, or consequential damages arising out of or in connection with the use of our services.</p>
+        </section>
+
+        <section>
+            <h2>Contact Information</h2>
+            <p>If you have any questions about these Terms and Conditions, please contact us at <a href="mailto:support@busticketx.com">support@busticketx.com</a>.</p>
+        </section>
+
+        <section class="back-link">
+            <a href="{% url 'home' %}">Back to Homepage</a>
+        </section>
+    </main>
 </body>
 </html>

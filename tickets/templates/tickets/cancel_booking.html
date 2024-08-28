@@ -1,11 +1,100 @@
-{% block content %}
-<h2>Cancel Booking</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cancel Booking - BusTicketX</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+            text-align: center;
+        }
 
-<p>Are you sure you want to cancel your booking for {{ booking.bus }} on {{ booking.date }}?</p>
+        header {
+            padding: 1rem;
+            background-color: #ffffff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
 
-<form method="post">
-    {% csrf_token %}
-    <button type="submit">Yes, cancel my booking</button>
-    <a href="{% url 'cancel_booking_list' %}">No, go back</a>
-</form>
-{% endblock %}
+        h1 {
+            color: #333333;
+            margin: 0;
+        }
+
+        h2 {
+            color: #0056b3; /* Primary color for headings */
+            margin-top: 0;
+        }
+
+        .main-content {
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 600px;
+            background-color: #ffffff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-radius: 10px; /* Rounded corners */
+        }
+
+        p {
+            line-height: 1.6;
+            margin-bottom: 1rem;
+            color: #333333;
+        }
+
+        .confirm-btn {
+            background-color: #0056b3; /* Primary button color */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 10px; /* Space between buttons */
+            transition: background-color 0.3s;
+        }
+
+        .confirm-btn:hover {
+            background-color: #004494; /* Darker shade for hover effect */
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 1rem;
+        }
+
+        .back-link a {
+            color: #0056b3; /* Match primary color */
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>BusTicketX</h1>
+    </header>
+
+    <main class="main-content">
+        <h2>Cancel Booking</h2>
+
+        <p>Are you sure you want to cancel your booking for <strong>{{ booking.bus }}</strong> on <strong>{{ booking.date }}</strong>?</p>
+
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="confirm-btn">Yes, cancel my booking</button>
+            <a href="{% url 'cancel_booking_list' %}" class="back-link">No, go back</a>
+        </form>
+    </main>
+</body>
+</html>

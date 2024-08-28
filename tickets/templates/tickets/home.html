@@ -103,7 +103,7 @@
         button {
             font-family: 'Poppins', sans-serif;
             padding: 10px 20px;
-            background-color: #e74c3c;
+            background-color: #007BFF;
             color: white;
             border: none;
             border-radius: 5px;
@@ -114,10 +114,10 @@
         }
 
         button:hover {
-            background-color: #c0392b;
+            background-color: #0056b3;
         }
         .register-btn {
-            background-color: #b2b2b2; /* Ash color */
+            background-color: #000000; /* Ash color */
             color: white;
             border: none;
             padding: 10px 20px;
@@ -125,7 +125,7 @@
             transition: background-color 0.3s;
         }
         .register-btn:hover {
-            background-color: #000000; /* Black color on hover */
+            background-color: #b2b2b2; /* Black color on hover */
         }
 
         .nav {
@@ -224,7 +224,7 @@
         }
 
         .faq-tabs div.active {
-            border-bottom: 2px solid #e74c3c;
+            border-bottom: 2px solid #007BFF;
         }
 
         .faq-tabs div {
@@ -235,7 +235,7 @@
         }
 
         .faq-tabs div:hover {
-            border-bottom: 2px solid #e74c3c;
+            border-bottom: 2px solid #0056b3;
         }
 
         .faq-content {
@@ -305,11 +305,11 @@
             <a href="{% url 'cancel_booking_list' %}"><i class="fa fa-times-circle"></i>Cancel Ticket</a>
             <a href="{% url 'register' %}"><i class="fa fa-user-plus"></i>Register</a>
             <a href="{% url 'login' %}"><i class="fa fa-sign-in-alt"></i>Login</a>
-            <a href="{% url 'settings' %}"><i class="fa fa-cog"></i>Settings</a>
             <a href="{% url 'terms' %}"><i class="fa fa-file-alt"></i>Terms and Conditions</a>
             <a href="{% url 'help' %}"><i class="fa fa-question-circle"></i>Help</a>
             <a href="{% url 'faqs' %}"><i class="fa fa-info-circle"></i>FAQs</a>
             <a href="{% url 'about' %}"><i class="fa fa-info"></i>About</a>
+            
         </div>
         <div class="auth-buttons">
             {% if user.is_authenticated %}

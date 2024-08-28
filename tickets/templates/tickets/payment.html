@@ -5,42 +5,71 @@
     <title>Payment - BusTicketX</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap">
     <style>
-        body{
-        font-family: 'Poppins', sans-serif;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        gap: 20px;
-      }
+        body {
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
 
-      *{
-        padding: 0;
-        margin: 0;
-        box-sizing: border-box;
-      }
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .details {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        form {
+            text-align: center;
+        }
+
         button {
             font-family: 'Poppins', sans-serif;
             padding: 10px 20px;
-            background-color: #e74c3c;
+            background-color: #007BFF; /* Updated button color */
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            margin-top: 10px;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
         }
+
         button:hover {
-            background-color: #c0392b;
+            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
-    <h1>Payment for Booking: {{ booking.bus.name }}</h1>
-    <p>Amount: {{ total_price }}</p>
-    <form method="post">
-        {% csrf_token %}
-        <button type="submit">Pay Now</button>
-    </form>
+    <div class="details">
+        <h1>Payment for Booking: {{ booking.bus.name }}</h1>
+        <p>Amount: {{ total_price }}</p>
+        <p>Please review your booking details before proceeding with the payment. Ensure that all information is correct.</p>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit">Pay Now</button>
+        </form>
+    </div>
 </body>
 </html>
