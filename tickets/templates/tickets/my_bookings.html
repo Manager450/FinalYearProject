@@ -64,6 +64,7 @@
             padding: 0.5rem 1rem;
             border-radius: 5px;
             cursor: pointer;
+            margin-right: 1rem;
         }
 
         button:hover {
@@ -179,6 +180,10 @@
                         {% endfor %}
                     </p>
                     <p>Booked On: {{ booking.booked_on }}</p>
+                    <form method="post" action="{% url 'download_ticket' booking.id %}">
+                        {% csrf_token %}
+                        <button type="submit">Download Ticket</button>
+                    </form>
                     <form method="post" action="{% url 'clear_booking' booking.id %}">
                         {% csrf_token %}
                         <button type="submit">Clear</button>
@@ -221,7 +226,7 @@
     {% endif %}
 
     <section class="homepage-link">
-        <a href="{% url 'home' %}">Back to Homepage</a>
+        <a href="{% url 'home' %}">Return to Home</a>
     </section>
 
     <script>

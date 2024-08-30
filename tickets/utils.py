@@ -5,6 +5,7 @@ from django.http import FileResponse
 import io 
 from twilio.rest import Client
 from django.conf import settings
+import requests
 
 def send_mticket(phone_number, booking):
     client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
@@ -63,8 +64,25 @@ def generate_ticket(booking):
     return buffer
 
 def process_mobile_money_payment(phone_number, amount):
-    # Placeholder for mobile money payment integration
-    # Implement the API call to your mobile money provider here
-    # Example: Call MTN MoMo API and return the status
-    # For now, we will assume the payment is always successful
-    return 'Success'
+    headers = {
+        'Authorization': f'Bearer {settings.PAYSTACK_SECRET_KEY}',
+        'Content-Type': 'application/json',
+    }
+    data = {
+        'amount': int(amount * 100),  # Convert amount to kobo
+        'phone_number': phone_number,
+        'email': 'user@example.com',  # Optional
+        'currency': 'GHS',
+        'payment_type': 'mobilemoneygh'
+    }
+    response = requests.post('https://api.paystack.co/transaction/initialize', json=data, headers=headers)
+    
+    print(f"API Response Status Code: {response.status_code}")
+    print(f"API Response: {response.json()}")
+
+    if response.status_code == 200:
+        response_data = response.json()
+        return response_data['status'], response_data['data']
+    else:
+        response_data = response.json()
+        return response_data['status'], response_data['message']

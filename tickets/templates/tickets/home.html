@@ -331,13 +331,47 @@
         }
 
         .footer {
-            background-color: #ffffff;
-            border-top: 1px solid #ddd;
-            padding: 20px;
+            padding: 2rem;
             text-align: center;
             position: relative;
             bottom: 0;
             width: 100%;
+        }
+
+        .footer p {
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+
+        .footer a {
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .footer .footer-links {
+            margin-top: 1rem;
+        }
+
+        .footer .footer-links a {
+            margin: 0 0.5rem;
+            display: inline-block;
+        }
+
+        .footer .contact-info {
+            margin-top: 1rem;
+        }
+
+        .footer .contact-info a {
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .footer .contact-info a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -393,7 +427,7 @@
     <p style="text-align: center;">Find and book your bus tickets with just a few clicks.</p>
     <div class="container">
         <h2>Online Bus Ticket Booking</h2>
-        <form id="search-form" action="{% url 'search_results' %}" method="get">
+        <form id="search-form" action="{% url 'search_results' %}" method="get" onsubmit="validateForm(event)">
             <select id="source" name="source" required>
                 <option value="" disabled selected>Select Source</option>
                 <option value="Accra">Accra</option>
@@ -554,11 +588,18 @@
     </div>
 
 
-    <div class="footer">
+    <footer class="footer">
         <p>&copy; 2024 BusTicketX. All rights reserved.</p>
-        <p><a href="{% url 'terms' %}">Terms and Conditions</a> | <a href="{% url 'privacy' %}">Privacy Policy</a></p>
-        <p>Contact us: <a href="mailto:support@busticketx.com">support@busticketx.com</a></p>
-    </div>
+        
+        <div class="footer-links">
+            <a href="{% url 'terms' %}">Terms and Conditions</a> | 
+            <a href="{% url 'privacy' %}">Privacy Policy</a>
+        </div>
+
+        <div class="contact-info">
+            <p>Contact us: <a href="mailto:support@busticketx.com">support@busticketx.com</a></p>
+        </div>
+    </footer>
 
     <!-- <div id="chatbot-container">
         <button id="chatbot-button">
@@ -568,10 +609,19 @@
     </div> -->
 
     <script>
+        function validateForm(event) {
+            const source = document.getElementById('source').value;
+            const destination = document.getElementById('destination').value;
+
+            if (source && destination && source === destination) {
+                event.preventDefault();
+                alert('Source and destination cannot be the same.');
+            }
+        }
+
          document.addEventListener('DOMContentLoaded', function() {
-            // Get today's date
+
             const today = new Date().toISOString().split('T')[0];
-            // Set the min attribute of the date input field
             document.getElementById('travel_date').setAttribute('min', today);
         });
 
@@ -580,7 +630,6 @@
             alert('Chatbot will open here!');
         });
 
-        // Optional: scroll to chatbot section when menu item clicked
         document.getElementById('chatbot-link').addEventListener('click', function (e) {
             e.preventDefault();
             document.getElementById('chatbot-container').scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
@@ -646,8 +695,7 @@
         function selectRoute(source, destination) {
             document.getElementById('source').value = source;
             document.getElementById('destination').value = destination;
-            // Redirect to the search form section
-            window.location.href = '#search-form'; // Adjust this ID based on your actual form section ID
+            window.location.href = '#search-form'; 
         }
 
         function scrollToSearchForm() {

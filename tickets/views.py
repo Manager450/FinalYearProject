@@ -12,9 +12,11 @@ from django.contrib import messages
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 from .utils import generate_ticket, send_mticket, process_mobile_money_payment
-from django.http import FileResponse, JsonResponse
+from django.http import FileResponse, JsonResponse, Http404, HttpResponseRedirect, HttpResponse
 from django.core.mail import send_mail
 import time
+from .paystack import Paystack
+import requests
 
 def home(request):
     today_date = timezone.now().date()
@@ -77,7 +79,9 @@ def select_boarding_dropping_points(request, bus_id):
             boarding_point = form.cleaned_data['boarding_point']
             dropping_point = form.cleaned_data['dropping_point']
             redirect_url = reverse('booking_summary', args=[bus_id, boarding_point.id, dropping_point.id])
-            return redirect(redirect_url)     
+            print(type(settings))
+            return redirect(redirect_url)
+             
     else:
         form = BusRouteForm()
         form.fields['boarding_point'].queryset = boarding_points
@@ -145,44 +149,107 @@ def bus_details(request, bus_id):
     bus = get_object_or_404(Bus, id=bus_id)
     return render(request, 'tickets/bus_details.html', {'bus': bus})
 
-    
 @login_required
 def payment(request, bus_id, boarding_point_id, dropping_point_id, seat_ids, total_price):
+    # Retrieve the necessary objects
     bus = get_object_or_404(Bus, id=bus_id)
     boarding_point = get_object_or_404(BusStop, id=boarding_point_id)
     dropping_point = get_object_or_404(BusStop, id=dropping_point_id)
+    
+    # Convert seat_ids to a list of integers
     seat_ids_list = [int(seat_id) for seat_id in seat_ids.split(',')]
     seats = Seat.objects.filter(id__in=seat_ids_list)
     
-    booking = None  # Initialize booking variable
-
+    # Initialize the booking
+    booking = Booking(
+        bus=bus, 
+        boarding_point=boarding_point,
+        dropping_point=dropping_point
+    )
+    
     if request.method == 'POST':
-        # Process Mobile Money Payment
         phone_number = request.POST.get('phone_number')
-        payment_status = process_mobile_money_payment(phone_number, total_price)
         
-        if payment_status == 'Success':
+        # Prepare data for the payment request
+        headers = {
+            'Authorization': f'Bearer {settings.PAYSTACK_SECRET_KEY}',
+            'Content-Type': 'application/json',
+        }
+        data = {
+            'amount': int(total_price * 100),  # Convert amount to kobo
+            'phone_number': phone_number,
+            'email': 'user@example.com',  # Optional
+            'currency': 'GHS',
+            'payment_type': 'mobilemoneygh'
+        }
+        response = requests.post('https://api.paystack.co/transaction/initialize', json=data, headers=headers)
+        
+        if response.status_code == 200:
+            response_data = response.json()
+            payment = Payment.objects.create(
+                booking=None,  # Booking to be created upon successful payment verification
+                amount=total_price,
+                reference=response_data['data']['reference'],
+                status='Pending'
+            )
+            payment.save()
+            return redirect(response_data['data']['authorization_url'])
+        else:
+            response_data = response.json()
+            messages.error(request, f'Payment initialization failed: {response_data["message"]}')
+    
+    # Prepare context data
+    context = {
+        'total_price': total_price,
+        'booking': booking,
+        'paystack_pub_key': settings.PAYSTACK_PUBLIC_KEY,  # Pass the public key to the template
+    }
+    
+    return render(request, 'tickets/payment.html', context)
+
+def error_page(request):
+    return render(request, 'tickets/error.html', {'message': 'An error occurred. Please try again.'})
+
+def verify_payment(request, reference):
+    paystack = Paystack()
+    status, data = paystack.verify_payment(reference)
+
+    # Add debugging information
+    print(f'Payment verification status: {status}, data: {data}')
+
+    if status == 'success' and data.get('status') == 'success':
+        try:
+            payment = get_object_or_404(Payment, reference=reference)
+            payment.status = 'Success'
+            payment.save()
+
+            # Ensure you have these details
+            bus = get_object_or_404(Bus, id=payment.bus_id)
+            boarding_point = get_object_or_404(BusStop, id=payment.boarding_point_id)
+            dropping_point = get_object_or_404(BusStop, id=payment.dropping_point_id)
+            seats = Seat.objects.filter(id__in=payment.seat_ids)
+
             booking = Booking.objects.create(
                 user=request.user,
                 bus=bus, 
                 boarding_point=boarding_point,
                 dropping_point=dropping_point
             )
-            
+
             for seat in seats:
                 booking.seats.add(seat)
                 seat.is_available = False
                 seat.save()
 
-            payment = Payment.objects.create(booking=booking, amount=total_price, status='Success')
-            
-            return redirect('payment_success', payment_id=payment.id)  # Fix payment_id to booking.id
-        else:
-            messages.error(request, 'Payment failed. Please try again.')
-    
-    # Render payment template with or without booking data
-    return render(request, 'tickets/payment.html', {'booking': booking, 'total_price': total_price})
-          
+            return redirect('payment_success', payment_id=payment.id)
+        except Exception as e:
+            print(f'Error during booking creation: {e}')
+            messages.error(request, 'An error occurred while processing your payment. Please try again.')
+            return redirect('payment_failed')
+    else:
+        messages.error(request, f'Payment verification failed: {data.get("message", "Unknown error")}')
+        return redirect('payment_failed')
+
 @login_required
 def payment_success(request, payment_id):
     payment = get_object_or_404(Payment, id=payment_id)
@@ -198,6 +265,19 @@ def payment_success(request, payment_id):
             messages.success(request, "m-Ticket sent successfully!")
 
     return render(request, 'tickets/payment_success.html', {'payment': payment, 'booking': booking})
+
+def payment_failed(request):
+    return render(request, 'tickets/payment_failed.html', {'message': 'Payment verification failed. Please try again.'})
+
+@login_required
+def download_ticket(request, booking_id):
+    booking = get_object_or_404(Booking, id=booking_id, user=request.user, status='active', cleared=False)
+    
+    if request.method == 'POST':
+        buffer = generate_ticket(booking)
+        return FileResponse(buffer, as_attachment=True, filename='ticket.pdf')
+    
+    raise Http404
 
 @login_required
 def my_bookings(request):
@@ -311,7 +391,7 @@ def help_view(request):
 def faqs(request):
     return render(request, 'tickets/faqs.html')
 
-def settings(request):
+def site_settings(request):
     return render(request, 'tickets/settings.html')
 
 @login_required

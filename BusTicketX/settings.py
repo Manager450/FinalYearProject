@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -151,6 +154,10 @@ ACCOUNT_EMAIL_VERIFICATION = 'none'
 TWILIO_ACCOUNT_SID = 'ACf77b2cc978a5561a9e366c604bb1e60d'
 TWILIO_AUTH_TOKEN = '8a5a69b508b4b1e3f7e9400c933f0e37'
 TWILIO_PHONE_NUMBER = '+16196635919'
+
+PAYSTACK_SECRET_KEY = os.getenv('SECRET_KEY')
+PAYSTACK_PUBLIC_KEY = 'pk_test_9262d9856ec6b5bd2b3356c635ce94d75d06417a'
+
 
 SOCIALACCOUNT_PROVIDERS = {
     'facebook': {

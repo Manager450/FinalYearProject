@@ -88,7 +88,7 @@
     <main class="main-content">
         <h2>Cancel Booking</h2>
 
-        <p>Are you sure you want to cancel your booking for <strong>{{ booking.bus }}</strong> on <strong>{{ booking.date }}</strong>?</p>
+        <p>Are you sure you want to cancel your booking for <strong>{{ booking.bus }}</strong> on <strong>{{ booking.booked_on }}</strong>?</p>
 
         <form method="post">
             {% csrf_token %}

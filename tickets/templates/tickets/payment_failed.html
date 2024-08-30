@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Booking Details - BusTicketX</title>
+    <title>Payment Failed - BusTicketX</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap">
     <style>
         body {
@@ -12,38 +12,42 @@
             padding: 0;
             background-color: #f4f4f4;
             color: #333;
+            text-align: center;
         }
 
         header {
             padding: 1rem;
+            background-color: #007BFF;
+            color: #fff;
             text-align: center;
         }
 
         h1 {
             margin: 0;
+            font-size: 2rem;
         }
 
-        section {
+        .message-container {
             padding: 2rem;
             margin: 0 auto;
-            max-width: 800px;
+            max-width: 600px;
         }
 
-        .booking-details {
+        .message-box {
             background: #fff;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
             padding: 1rem;
+            text-align: center;
         }
 
-        .booking-details p {
-            margin: 0.5rem 0;
+        .message-box p {
+            margin: 1rem 0;
+            font-size: 1rem;
         }
 
         .homepage-link {
-            display: block;
             margin-top: 2rem;
-            text-align: center;
         }
 
         .homepage-link a {
@@ -60,21 +64,17 @@
 </head>
 <body>
     <header>
-        <h1>Booking Details</h1>
+        <h1>Payment Failed</h1>
     </header>
 
-    <section class="booking-details">
-        <p><strong>Bus:</strong> {{ booking.bus.name }}</p>
-        <p><strong>Seat Number:</strong>  {% for seat in booking.seats.all %}
-            {{ seat.seat_number }}{% if not forloop.last %}, {% endif %}
-        {% empty %}
-            No seats booked.
-        {% endfor %}</p>
-        <p><strong>Booked On:</strong> {{ booking.booked_on }}</p>
-    </section>
-
-    <section class="homepage-link">
-        <a href="{% url 'home' %}">Return to home</a>
+    <section class="message-container">
+        <div class="message-box">
+            <p>Unfortunately, the payment could not be processed. Please try again later or contact support if the issue persists.</p>
+        </div>
+        
+        <section class="homepage-link">
+            <a href="{% url 'home' %}">Return to Home</a>
+        </section>
     </section>
 </body>
 </html>

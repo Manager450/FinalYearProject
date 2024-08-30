@@ -40,8 +40,8 @@
             text-align: center;
         }
 
-        form {
-            text-align: center;
+        .form-group {
+            margin-top: 20px;
         }
 
         button {
@@ -59,17 +59,62 @@
         button:hover {
             background-color: #0056b3;
         }
+
+        a {
+            color: #007BFF; /* Updated link color */
+            text-decoration: none;
+            font-size: 16px;
+            margin-top: 20px;
+            display: inline-block;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
     <div class="details">
         <h1>Payment for Booking: {{ booking.bus.name }}</h1>
-        <p>Amount: {{ total_price }}</p>
+        <p>Amount: GHS {{ total_price|floatformat:2 }}</p>
         <p>Please review your booking details before proceeding with the payment. Ensure that all information is correct.</p>
-        <form method="post">
+        <form id="paymentForm" method="post">
             {% csrf_token %}
-            <button type="submit">Pay Now</button>
+            <label for="phone_number">Phone Number:</label>
+            <input type="text" id="phone_number" name="phone_number" required>
+            <div class="form-group">
+                <button type="button" onclick="payWithPaystack()">Pay Now</button>
+            </div>
         </form>
     </div>
+    <a href="{% url 'home' %}">Return to Home</a>
+
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const amountInGHS = parseFloat('{{ total_price|floatformat:"0.2f" }}'); // Amount in GHS
+            const pubKey = '{{ paystack_pub_key|escapejs }}';
+            
+            window.payWithPaystack = function() {
+                const phoneNumber = document.getElementById('phone_number').value;
+                const email = 'user@example.com'; // Replace with the actual email if available
+
+                const handler = PaystackPop.setup({
+                    key: pubKey,
+                    email: email,
+                    amount: Math.round(amountInGHS * 100), // Paystack requires amount in kobo
+                    currency: 'GHS',
+                    callback: function(response) {
+                        window.location.href = "{% url 'verify_payment' reference='__REFERENCE__' %}".replace('__REFERENCE__', response.reference);
+                    },
+                    onClose: function() {
+                        alert('Payment window closed.');
+                    }
+                });
+                handler.openIframe();
+            };
+        });
+    </script>
 </body>
 </html>

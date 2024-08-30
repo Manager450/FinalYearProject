@@ -3,6 +3,8 @@ from django.contrib.auth.models import User
 from django.db.models.signals import  post_save
 from django.dispatch import receiver
 from django.utils import timezone
+from django.core.exceptions import ValidationError
+from .paystack import Paystack
 
 
 class BusOperator(models.Model):
@@ -21,19 +23,32 @@ class Bus(models.Model):
     destination = models.CharField(max_length=100)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     amenities = models.TextField()
-    bus_type = models.CharField(max_length=50)  # Add this field
-    total_seats = models.IntegerField(default=50)  # Add this field
+    bus_type = models.CharField(max_length=50)
+    total_seats = models.IntegerField(default=50)
 
     def __str__(self):
-           return self.name
+        return self.name
 
     def available_seats(self):
-           return self.seat_set.filter(is_available=True).count()
-           
+        return self.seat_set.filter(is_available=True).count()
+
     @classmethod
     def clear_past_buses(cls):
         cls.objects.filter(departure_time__lt=timezone.now()).delete()
-   
+
+    def clean(self):
+        # Ensure the departure time is today or in the future
+        if self.departure_time < timezone.now():
+            raise ValidationError("Departure time cannot be in the past.")
+
+        # Ensure the arrival time is not less than the departure time
+        if self.arrival_time < self.departure_time:
+            raise ValidationError("Arrival time cannot be earlier than departure time.")
+
+    def save(self, *args, **kwargs):
+        # Run custom validations
+        self.clean()
+        super().save(*args, **kwargs)
 
 
 class BusStop(models.Model):
@@ -104,9 +119,9 @@ def create_seats(sender, instance, created, **kwargs):
             seat_number = f'{i}'
             Seat.objects.create(bus=instance, seat_number=seat_number)
 
-# @receiver(post_save, sender=Bus) 
-# def clear_past_buses_on_save(sender, instance, **kwargs):
-#     Bus.clear_past_buses()
+@receiver(post_save, sender=Bus) 
+def clear_past_buses_on_save(sender, instance, **kwargs):
+    Bus.clear_past_buses()
 
 
 class Profile(models.Model):
