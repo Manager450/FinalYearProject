@@ -5,6 +5,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from .paystack import Paystack
+import secrets
 
 
 class BusOperator(models.Model):
@@ -95,12 +96,33 @@ class Booking(models.Model):
 class Payment(models.Model):
     booking = models.OneToOneField(Booking, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    reference = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    # reference = models.CharField(max_length=100, unique=True, null=True, blank=True)
     payment_date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, choices=[('Pending', 'Pending'), ('Success', 'Success'), ('Failed', 'Failed')])
 
     def __str__(self):
         return f"{self.booking} - {self.status}"
+
+    # def save(self, *args, **kwargs):
+    #     if not self.reference:
+    #         self.reference = secrets.token_urlsafe(20)  # Generate a reference if not set
+    #     super().save(*args, **kwargs)
+    #     # Print the reference after saving the payment object
+    #     print(f"Payment saved with reference: {self.reference}")
+
+    # def amount_value(self):
+    #     return int(self.amount * 100)
+
+    # def verify_payment(self):
+    #     paystack = Paystack()
+    #     status, result = paystack.verify_payment(self.reference)
+    #     if status and result['amount'] / 100 == self.amount:
+    #         self.status = 'Success'
+    #         self.save()
+    #         return True
+    #     self.status = 'Failed'
+    #     self.save()
+    #     return False
 
 class Review(models.Model):
     bus = models.ForeignKey(Bus, on_delete=models.CASCADE)

@@ -17,6 +17,7 @@ from django.core.mail import send_mail
 import time
 from .paystack import Paystack
 import requests
+import secrets
 
 def home(request):
     today_date = timezone.now().date()
@@ -160,95 +161,41 @@ def payment(request, bus_id, boarding_point_id, dropping_point_id, seat_ids, tot
     seat_ids_list = [int(seat_id) for seat_id in seat_ids.split(',')]
     seats = Seat.objects.filter(id__in=seat_ids_list)
     
-    # Initialize the booking
-    booking = Booking(
-        bus=bus, 
-        boarding_point=boarding_point,
-        dropping_point=dropping_point
-    )
-    
     if request.method == 'POST':
         phone_number = request.POST.get('phone_number')
-        
-        # Prepare data for the payment request
-        headers = {
-            'Authorization': f'Bearer {settings.PAYSTACK_SECRET_KEY}',
-            'Content-Type': 'application/json',
-        }
-        data = {
-            'amount': int(total_price * 100),  # Convert amount to kobo
-            'phone_number': phone_number,
-            'email': 'user@example.com',  # Optional
-            'currency': 'GHS',
-            'payment_type': 'mobilemoneygh'
-        }
-        response = requests.post('https://api.paystack.co/transaction/initialize', json=data, headers=headers)
-        
-        if response.status_code == 200:
-            response_data = response.json()
-            payment = Payment.objects.create(
-                booking=None,  # Booking to be created upon successful payment verification
-                amount=total_price,
-                reference=response_data['data']['reference'],
-                status='Pending'
-            )
-            payment.save()
-            return redirect(response_data['data']['authorization_url'])
-        else:
-            response_data = response.json()
-            messages.error(request, f'Payment initialization failed: {response_data["message"]}')
+
+        # Create the booking and link it to the payment
+        booking = Booking.objects.create(
+            user=request.user,
+            bus=bus,
+            boarding_point=boarding_point,
+            dropping_point=dropping_point,
+        )
+        booking.seats.set(seats)  # Set the selected seats for the booking
+
+        # Simulate payment success
+        payment = Payment.objects.create(
+            booking=booking,
+            amount=total_price,
+            status='Success'  # Automatically mark as success
+        )
+        payment.save()
+
+        # Mark seats as unavailable
+        for seat in seats:
+            seat.is_available = False
+            seat.save()
+
+        # Redirect to payment success page
+        return redirect('payment_success', payment_id=payment.id)
     
     # Prepare context data
     context = {
         'total_price': total_price,
-        'booking': booking,
-        'paystack_pub_key': settings.PAYSTACK_PUBLIC_KEY,  # Pass the public key to the template
+        'seats': seats,
     }
     
     return render(request, 'tickets/payment.html', context)
-
-def error_page(request):
-    return render(request, 'tickets/error.html', {'message': 'An error occurred. Please try again.'})
-
-def verify_payment(request, reference):
-    paystack = Paystack()
-    status, data = paystack.verify_payment(reference)
-
-    # Add debugging information
-    print(f'Payment verification status: {status}, data: {data}')
-
-    if status == 'success' and data.get('status') == 'success':
-        try:
-            payment = get_object_or_404(Payment, reference=reference)
-            payment.status = 'Success'
-            payment.save()
-
-            # Ensure you have these details
-            bus = get_object_or_404(Bus, id=payment.bus_id)
-            boarding_point = get_object_or_404(BusStop, id=payment.boarding_point_id)
-            dropping_point = get_object_or_404(BusStop, id=payment.dropping_point_id)
-            seats = Seat.objects.filter(id__in=payment.seat_ids)
-
-            booking = Booking.objects.create(
-                user=request.user,
-                bus=bus, 
-                boarding_point=boarding_point,
-                dropping_point=dropping_point
-            )
-
-            for seat in seats:
-                booking.seats.add(seat)
-                seat.is_available = False
-                seat.save()
-
-            return redirect('payment_success', payment_id=payment.id)
-        except Exception as e:
-            print(f'Error during booking creation: {e}')
-            messages.error(request, 'An error occurred while processing your payment. Please try again.')
-            return redirect('payment_failed')
-    else:
-        messages.error(request, f'Payment verification failed: {data.get("message", "Unknown error")}')
-        return redirect('payment_failed')
 
 @login_required
 def payment_success(request, payment_id):
@@ -268,6 +215,9 @@ def payment_success(request, payment_id):
 
 def payment_failed(request):
     return render(request, 'tickets/payment_failed.html', {'message': 'Payment verification failed. Please try again.'})
+
+def error_page(request):
+    return render(request, 'tickets/error.html', {'message': 'An error occurred. Please try again.'})
 
 @login_required
 def download_ticket(request, booking_id):

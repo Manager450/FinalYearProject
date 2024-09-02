@@ -13,9 +13,10 @@ class Paystack:
         }
         url = self.base_url + path
         response = requests.get(url, headers=headers)
+        
         if response.status_code == 200:
             response_data = response.json()
             return response_data['status'], response_data['data']
         else:
             response_data = response.json()
-            return response_data['status'], response_data['message']
+            return response_data['status'], response_data.get('message', 'No message returned')

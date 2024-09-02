@@ -44,6 +44,16 @@
             margin-top: 20px;
         }
 
+        input[type="text"] {
+            width: 80%; /* Adjust width to a percentage less than 100% */
+            max-width: 300px; /* Adjust max-width to a desired value */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
         button {
             font-family: 'Poppins', sans-serif;
             padding: 10px 20px;
@@ -83,38 +93,10 @@
             <label for="phone_number">Phone Number:</label>
             <input type="text" id="phone_number" name="phone_number" required>
             <div class="form-group">
-                <button type="button" onclick="payWithPaystack()">Pay Now</button>
+                <button type="submit">Confirm Payment</button>
             </div>
         </form>
     </div>
     <a href="{% url 'home' %}">Return to Home</a>
-
-    <script src="https://js.paystack.co/v1/inline.js"></script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const amountInGHS = parseFloat('{{ total_price|floatformat:"0.2f" }}'); // Amount in GHS
-            const pubKey = '{{ paystack_pub_key|escapejs }}';
-            
-            window.payWithPaystack = function() {
-                const phoneNumber = document.getElementById('phone_number').value;
-                const email = 'user@example.com'; // Replace with the actual email if available
-
-                const handler = PaystackPop.setup({
-                    key: pubKey,
-                    email: email,
-                    amount: Math.round(amountInGHS * 100), // Paystack requires amount in kobo
-                    currency: 'GHS',
-                    callback: function(response) {
-                        window.location.href = "{% url 'verify_payment' reference='__REFERENCE__' %}".replace('__REFERENCE__', response.reference);
-                    },
-                    onClose: function() {
-                        alert('Payment window closed.');
-                    }
-                });
-                handler.openIframe();
-            };
-        });
-    </script>
 </body>
 </html>
