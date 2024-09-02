@@ -1,0 +1,6 @@
+Django==4.2
+django-paystack==2.0.1
+reportlab==3.6.0 
+twilio==8.2.0   
+django-allauth==0.55.0  
+requests==2.31.0 
