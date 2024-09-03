@@ -10,35 +10,72 @@ from reportlab.pdfgen import canvas
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 from django.http import FileResponse
-from twilio.rest import Client
+import africastalking
 from django.conf import settings
 import requests
+import re
+
+def format_phone_number(number):
+    """
+    Format the phone number to international format.
+    Assumes Ghanaian numbers start with '0' and need '+233' prefix.
+    """
+    number = number.strip()
+    if number.startswith('0'):
+        number = '+233' + number[1:]
+    elif not number.startswith('+'):
+        # If it's not already international format, prepend '+233'
+        number = '+233' + number
+    # Basic validation (ensuring the number only contains digits and '+' at the start)
+    if not re.match(r'^\+\d+$', number):
+        raise ValueError("Invalid phone number format.")
+    return number
+
+
+# Initialize Africastalking SDK
+username = settings.AFRICAS_TALKING_USERNAME 
+api_key = settings.AFRICAS_TALKING_API_KEY
+africastalking.initialize(username, api_key)
+
+def send_sms(phone_number, message):
+    try:
+        sms = africastalking.SMS
+
+        response = sms.send(message, [phone_number])
+        return response
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
+
 
 def send_mticket(phone_number, booking):
-    client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+    # Initialize Africa's Talking SDK
+    africastalking.initialize(username=settings.AFRICAS_TALKING_USERNAME, api_key=settings.AFRICAS_TALKING_API_KEY)
     
+    # Get the SMS service
+    sms = africastalking.SMS
+
     # Extract seat numbers from the booking
     seat_numbers = ', '.join([seat.seat_number for seat in booking.seats.all()])
     
-    # Create the message body
+    # Create the message body with detailed information, including the Ticket ID
     message_body = (
-        f"Your ticket for {booking.bus.name}:\n"
+        f"Your BusTicketX Ticket\n"
+        f"Ticket ID: {booking.ticket_id}\n"
+        f"Bus: {booking.bus.name}\n"
         f"Passenger: {booking.user.username}\n"
         f"Seat Numbers: {seat_numbers}\n"
-        f"Boarding: {booking.boarding_point}\n"
-        f"Dropping: {booking.dropping_point}\n"
-        f"Departure: {booking.bus.departure_time}\n"
-        f"Arrival: {booking.bus.arrival_time}"
+        f"Boarding Point: {booking.boarding_point}\n"
+        f"Dropping Point: {booking.dropping_point}\n"
+        f"Departure Time: {booking.bus.departure_time}\n"
+        f"Arrival Time: {booking.bus.arrival_time}\n"
+        f"Thank you for choosing BusTicketX!"
     )
     
     # Send the message
-    message = client.messages.create(
-        body=message_body,
-        from_=settings.TWILIO_PHONE_NUMBER,
-        to=phone_number
-    )
+    response = sms.send(message=message_body, recipients=[phone_number])
     
-    return message.sid
+    return response
 
 def generate_ticket(booking):
     buffer = io.BytesIO()
@@ -76,7 +113,7 @@ def generate_ticket(booking):
     # Ticket ID Section
     p.setFont("Helvetica-Bold", 14)
     ticket_id_y = title_y - 40
-    p.drawString(100, ticket_id_y, f"Ticket ID: {uuid.uuid4().hex[:8].upper()}")
+    p.drawString(100, ticket_id_y, f"Ticket ID: {booking.ticket_id}")
 
     # Operator Section
     p.setFont("Helvetica-Bold", 16)
@@ -126,27 +163,3 @@ def generate_ticket(booking):
     p.save()
     buffer.seek(0)
     return buffer
-
-def process_mobile_money_payment(phone_number, amount):
-    headers = {
-        'Authorization': f'Bearer {settings.PAYSTACK_SECRET_KEY}',
-        'Content-Type': 'application/json',
-    }
-    data = {
-        'amount': int(amount * 100),  # Convert amount to kobo
-        'phone_number': phone_number,
-        'email': 'user@example.com',  # Optional
-        'currency': 'GHS',
-        'payment_type': 'mobilemoneygh'
-    }
-    response = requests.post('https://api.paystack.co/transaction/initialize', json=data, headers=headers)
-    
-    print(f"API Response Status Code: {response.status_code}")
-    print(f"API Response: {response.json()}")
-
-    if response.status_code == 200:
-        response_data = response.json()
-        return response_data['status'], response_data['data']
-    else:
-        response_data = response.json()
-        return response_data['status'], response_data['message']

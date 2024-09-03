@@ -21,6 +21,7 @@ BusTicketX is a Django-based web application for bus ticket reservations. The ap
 - Django
 - VS Code
 - Paystack Account
+- Africastalking Account
 
 ## Installation
 
@@ -97,3 +98,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Paystack](https://paystack.com/)
 - [VS Code](https://code.visualstudio.com/)
 - [redBus](https://www.redbus.com/)
+- [Africastalking](https://www.africastalking.com/)

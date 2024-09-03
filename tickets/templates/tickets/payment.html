@@ -45,8 +45,8 @@
         }
 
         input[type="text"] {
-            width: 80%; /* Adjust width to a percentage less than 100% */
-            max-width: 300px; /* Adjust max-width to a desired value */
+            width: 80%; 
+            max-width: 300px;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
@@ -57,7 +57,7 @@
         button {
             font-family: 'Poppins', sans-serif;
             padding: 10px 20px;
-            background-color: #007BFF; /* Updated button color */
+            background-color: #007BFF;
             color: white;
             border: none;
             border-radius: 5px;
@@ -71,7 +71,7 @@
         }
 
         a {
-            color: #007BFF; /* Updated link color */
+            color: #007BFF;
             text-decoration: none;
             font-size: 16px;
             margin-top: 20px;
@@ -81,9 +81,79 @@
         a:hover {
             text-decoration: underline;
         }
+        .popup {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .popup-content {
+            background-color: #fff;
+            margin: 15% auto;
+            padding: 2rem;
+            border: 1px solid #ccc;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .popup-close {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .popup-close:hover {
+            color: #000;
+        }
+
+        .messages {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .messages li {
+            padding: 0.5rem;
+            border-radius: 5px;
+            background-color: #e0e0e0;
+            margin-bottom: 0.5rem;
+        }
+
+        .messages li.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .messages li.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
     </style>
 </head>
 <body>
+    <div id="messagePopup" class="popup">
+        <div class="popup-content">
+            <span class="popup-close" onclick="closePopup()">&times;</span>
+            <ul class="messages">
+                {% if messages %}
+                    {% for message in messages %}
+                        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                    {% endfor %}
+                {% endif %}
+            </ul>
+        </div>
+    </div>
     <div class="details">
         <h1>Payment for Booking: {{ booking.bus.name }}</h1>
         <p>Amount: GHS {{ total_price|floatformat:2 }}</p>
@@ -93,10 +163,67 @@
             <label for="phone_number">Phone Number:</label>
             <input type="text" id="phone_number" name="phone_number" required>
             <div class="form-group">
-                <button type="submit">Confirm Payment</button>
+                <button type="submit" id="paystackBtn">Confirm Payment</button>
             </div>
         </form>
     </div>
     <a href="{% url 'home' %}">Return to Home</a>
+
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+    <script type="text/javascript">
+        const paymentForm = document.getElementById('paymentForm');
+        paymentForm.addEventListener("submit", payWithPaystack, false);
+    
+        function payWithPaystack(e) {
+            e.preventDefault();
+    
+            const phoneNumber = document.getElementById('phone_number').value;
+            const handler = PaystackPop.setup({
+                key: '{{ paystack_public_key }}', 
+                email: '{{ request.user.email }}',
+                amount: parseFloat("{{ total_price|floatformat:2 }}") * 100, // Convert amount to kobo
+                currency: 'GHS',
+                ref: '{{ reference }}', 
+                metadata: {
+                    custom_fields: [
+                        {
+                            display_name: "Phone Number",
+                            variable_name: "phone_number",
+                            value: phoneNumber,
+                        }
+                    ]
+                },
+                callback: function(response) {
+                    // Payment successful, submit the form
+                    paymentForm.submit();
+                },
+                onClose: function() {
+                    alert('Payment window closed.');
+                }
+            });
+            handler.openIframe();
+        }
+
+        function showPopup() {
+            var popup = document.getElementById("messagePopup");
+            if (popup) {
+                popup.style.display = "block";
+            }
+        }
+
+        function closePopup() {
+            var popup = document.getElementById("messagePopup");
+            if (popup) {
+                popup.style.display = "none";
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            var messages = document.querySelector('.messages li');
+            if (messages) {
+                showPopup();
+            }
+        });
+    </script>
 </body>
 </html>

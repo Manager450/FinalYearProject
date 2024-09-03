@@ -11,13 +11,14 @@ from datetime import datetime
 from django.contrib import messages
 from django.utils import timezone
 from django.utils.dateparse import parse_date
-from .utils import generate_ticket, send_mticket, process_mobile_money_payment
+from .utils import generate_ticket, send_mticket, send_sms, format_phone_number
 from django.http import FileResponse, JsonResponse, Http404, HttpResponseRedirect, HttpResponse
 from django.core.mail import send_mail
 import time
 from .paystack import Paystack
 import requests
 import secrets
+
 
 def home(request):
     today_date = timezone.now().date()
@@ -125,77 +126,166 @@ def cancel_booking_list(request):
     bookings = Booking.objects.filter(user=request.user, status='active')
     return render(request, 'tickets/cancel_booking_list.html', {'bookings': bookings})
 
-@login_required
+login_required
 def cancel_booking(request, booking_id):
     booking = get_object_or_404(Booking, id=booking_id, user=request.user)
 
     if request.method == "POST":
-        # Update the booking status to 'cancelled'
-        booking.status = 'cancelled'
-        booking.save()
+        # Check if the travel date has passed
+        travel_date = booking.bus.departure_time.date()
+        if travel_date < timezone.now().date():
+            messages.error(request, 'The travel date has passed. Refund is not possible.')
+            return redirect('cancel_booking', booking_id=booking.id)
 
-        # Free up the seats associated with this booking
-        seats = booking.seats.all()
-        for seat in seats:
-            seat.is_available = True
-            seat.save()
+        # Initialize refund process with Paystack
+        payment = Payment.objects.get(booking=booking)
+        paystack = Paystack()
 
-        messages.success(request, 'Your booking has been cancelled successfully.')
+        headers = {
+            'Authorization': f'Bearer {paystack.PAYSTACK_SK}',
+            'Content-Type': 'application/json',
+        }
+        data = {
+            'transaction': payment.reference,
+            'amount': payment.amount_value(),  # Amount in kobo
+        }
 
-        return render(request, 'tickets/cancel_confirmation.html')  
+        url = paystack.base_url + "refund"
+        response = requests.post(url, headers=headers, json=data)
+        response_data = response.json()
+
+        if response.status_code == 200 and response_data['status']:
+            # Update the booking status to 'cancelled'
+            booking.status = 'cancelled'
+            booking.save()
+
+            # Free up the seats associated with this booking
+            seats = booking.seats.all()
+            for seat in seats:
+                seat.is_available = True
+                seat.save()
+
+            # Mark the payment as refunded
+            payment.status = 'Refunded'
+            payment.save()
+
+            messages.success(request, 'Your booking has been cancelled successfully. Refund will be processed within 5-7 business days.')
+
+            return render(request, 'tickets/cancel_confirmation.html')
+        else:
+            messages.error(request, 'Refund failed. Please try again later or contact support.')
+            return redirect('cancel_booking', booking_id=booking.id)
 
     return render(request, 'tickets/cancel_booking.html', {'booking': booking})
-
+        
 def bus_details(request, bus_id):
     bus = get_object_or_404(Bus, id=bus_id)
     return render(request, 'tickets/bus_details.html', {'bus': bus})
 
 @login_required
 def payment(request, bus_id, boarding_point_id, dropping_point_id, seat_ids, total_price):
-    # Retrieve the necessary objects
     bus = get_object_or_404(Bus, id=bus_id)
     boarding_point = get_object_or_404(BusStop, id=boarding_point_id)
     dropping_point = get_object_or_404(BusStop, id=dropping_point_id)
-    
-    # Convert seat_ids to a list of integers
+
     seat_ids_list = [int(seat_id) for seat_id in seat_ids.split(',')]
     seats = Seat.objects.filter(id__in=seat_ids_list)
-    
+
+    paystack_public_key = settings.PAYSTACK_PUBLIC_KEY
+
+    # Retrieve the existing payment object
+    existing_payment = Payment.objects.filter(
+        booking__bus=bus,
+        booking__boarding_point=boarding_point,
+        booking__dropping_point=dropping_point,
+        booking__user=request.user,
+        status='Success'
+    ).first()  # Use first() to get the object or None
+
+    if existing_payment:
+        messages.error(request, "Payment has already been made for this booking.")
+        return redirect('payment_success', payment_id=existing_payment.id)
+
     if request.method == 'POST':
         phone_number = request.POST.get('phone_number')
 
-        # Create the booking and link it to the payment
+        # Create the booking
         booking = Booking.objects.create(
             user=request.user,
             bus=bus,
             boarding_point=boarding_point,
             dropping_point=dropping_point,
         )
-        booking.seats.set(seats)  # Set the selected seats for the booking
+        booking.seats.set(seats)
 
-        # Simulate payment success
-        payment = Payment.objects.create(
-            booking=booking,
-            amount=total_price,
-            status='Success'  # Automatically mark as success
-        )
-        payment.save()
+        # Generate the reference
+        reference = secrets.token_urlsafe(20)
 
-        # Mark seats as unavailable
-        for seat in seats:
-            seat.is_available = False
-            seat.save()
+        # Initialize payment with Paystack
+        paystack = Paystack()
+        headers = {
+            'Authorization': f'Bearer {paystack.PAYSTACK_SK}',
+            'Content-Type': 'application/json',
+        }
+        data = {
+            'email': request.user.email,
+            'amount': int(total_price * 100),  # Amount in kobo
+            'reference': reference,  # Use the generated reference
+            'callback_url': request.build_absolute_uri(reverse('verify_payment', args=[reference]))
+        }
 
-        # Redirect to payment success page
-        return redirect('payment_success', payment_id=payment.id)
-    
-    # Prepare context data
+        url = paystack.base_url + "transaction/initialize/"
+        response = requests.post(url, headers=headers, json=data)
+        response_data = response.json()
+
+        if response.status_code == 200 and response_data['status']:
+            authorization_url = response_data['data']['authorization_url']
+
+            # Save the payment with the same reference
+            payment = Payment.objects.create(
+                booking=booking,
+                amount=total_price,
+                reference=reference,
+                status='Pending'  # Initially mark as pending
+            )
+
+            # Mark seats as unavailable (can undo if payment fails)
+            for seat in seats:
+                seat.is_available = False
+                seat.save()
+
+            return redirect(authorization_url)
+        else:
+            return redirect('payment_failed')
+
     context = {
         'total_price': total_price,
         'seats': seats,
+        'paystack_public_key': paystack_public_key, 
     }
-    
+
     return render(request, 'tickets/payment.html', context)
+
+
+@login_required
+def verify_payment(request, reference):
+    payment = get_object_or_404(Payment, reference=reference)
+
+    if payment.status == 'Pending':
+        verified = payment.verify_payment()
+        if verified:
+            messages.success(request, "Payment successful! Your booking is confirmed.")
+            return redirect('payment_success', payment_id=payment.id)
+        else:
+            # Mark seats as available again if payment failed
+            for seat in payment.booking.seats.all():
+                seat.is_available = True
+                seat.save()
+            messages.error(request, "Payment failed or verification unsuccessful.")
+            return redirect('payment_failed')
+
+    return redirect('payment_success', payment_id=payment.id)
+
 
 @login_required
 def payment_success(request, payment_id):
@@ -208,7 +298,15 @@ def payment_success(request, payment_id):
             return FileResponse(buffer, as_attachment=True, filename='ticket.pdf')
         elif 'send_sms' in request.POST:
             phone_number = request.POST.get('phone_number', booking.user.profile.phone_number)
-            send_mticket(phone_number, booking)
+            
+            try:
+                formatted_phone_number = format_phone_number(phone_number)
+            except ValueError as e:
+                messages.error(request, str(e))
+                return redirect('payment_success', payment_id=payment_id)
+            
+            # Ensure send_mticket is called with formatted phone number
+            send_mticket(formatted_phone_number, booking)
             messages.success(request, "m-Ticket sent successfully!")
 
     return render(request, 'tickets/payment_success.html', {'payment': payment, 'booking': booking})

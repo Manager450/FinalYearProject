@@ -1,6 +1,5 @@
-Django==4.2
-django-paystack==2.0.1
-reportlab==3.6.0 
-twilio==8.2.0   
-django-allauth==0.55.0  
-requests==2.31.0 
+Django==5.1
+reportlab==4.2.2
+africastalking==1.2.8  
+django-allauth==64.1.0 
+requests==2.32.3
