@@ -1,13 +1,13 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.db.models.signals import  post_save
-from django.dispatch import receiver
 from django.utils import timezone
+from django.dispatch import receiver
+from django.db.models.signals import  post_save
 from django.core.exceptions import ValidationError
 from .paystack import Paystack
 import secrets
 import uuid
-
+from decimal import Decimal
 
 class BusOperator(models.Model):
     name = models.CharField(max_length=100)
@@ -39,19 +39,14 @@ class Bus(models.Model):
         cls.objects.filter(departure_time__lt=timezone.now()).delete()
 
     def clean(self):
-        # Ensure the departure time is today or in the future
         if self.departure_time < timezone.now():
             raise ValidationError("Departure time cannot be in the past.")
-
-        # Ensure the arrival time is not less than the departure time
         if self.arrival_time < self.departure_time:
             raise ValidationError("Arrival time cannot be earlier than departure time.")
 
     def save(self, *args, **kwargs):
-        # Run custom validations
         self.clean()
         super().save(*args, **kwargs)
-
 
 class BusStop(models.Model):
     name = models.CharField(max_length=100)
@@ -86,8 +81,8 @@ class Booking(models.Model):
     bus = models.ForeignKey(Bus, on_delete=models.CASCADE)
     seats = models.ManyToManyField(Seat)
     booked_on = models.DateTimeField(auto_now_add=True)
-    boarding_point = models.ForeignKey(BusStop, related_name='booking_boarding_point', on_delete=models.CASCADE, default=1)
-    dropping_point = models.ForeignKey(BusStop, related_name='booking_dropping_point', on_delete=models.CASCADE, default=1)
+    boarding_point = models.ForeignKey(BusStop, related_name='booking_boarding_point', on_delete=models.CASCADE)
+    dropping_point = models.ForeignKey(BusStop, related_name='booking_dropping_point', on_delete=models.CASCADE)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
     cleared = models.BooleanField(default=False)
     ticket_id = models.CharField(max_length=8, unique=True, default=uuid.uuid4().hex[:8].upper())
@@ -105,9 +100,9 @@ class Payment(models.Model):
         ('Success', 'Success'),
         ('Failed', 'Failed'),
         ('Refunded', 'Refunded'),
-        ('RefundRequested', 'RefundRequested')  # New status
+        ('RefundRequested', 'RefundRequested')
     ])
-    refund_date = models.DateTimeField(null=True, blank=True)  # Track when refund is processed
+    refund_date = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.booking} - {self.status}"
@@ -131,7 +126,6 @@ class Payment(models.Model):
         self.save()
         return False
 
-
 class Review(models.Model):
     bus = models.ForeignKey(Bus, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -142,6 +136,14 @@ class Review(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.bus.name} - {self.rating}"
 
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    phone_number = models.CharField(max_length=15, blank=True)
+
+    def __str__(self):
+        return self.user.username
+
+
 @receiver(post_save, sender=Bus)
 def create_seats(sender, instance, created, **kwargs):
     if created:
@@ -149,14 +151,6 @@ def create_seats(sender, instance, created, **kwargs):
             seat_number = f'{i}'
             Seat.objects.create(bus=instance, seat_number=seat_number)
 
-@receiver(post_save, sender=Bus) 
+@receiver(post_save, sender=Bus)
 def clear_past_buses_on_save(sender, instance, **kwargs):
     Bus.clear_past_buses()
-
-
-class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    phone_number = models.CharField(max_length=15, blank=True)
-
-    def __str__(self):
-        return self.user.username          

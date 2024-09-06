@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search Results - BusTicketX</title>
+    <title>Available Buses - {{ operator.name }}</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap">
     <style>
         body {
@@ -35,13 +35,6 @@
             border-radius: 8px;
         }
 
-        h2 {
-            margin-bottom: 1rem;
-            border-bottom: 2px solid #007BFF;
-            padding-bottom: 0.5rem;
-            font-size: 20px;
-        }
-
         .bus-result {
             padding: 16px;
             margin-bottom: 16px;
@@ -70,32 +63,39 @@
             background-color: #0056b3;
         }
 
-        .operator-info {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .operator {
+        .time {
             font-size: 18px;
             font-weight: bold;
         }
 
-        .bus-count {
-            font-size: 14px;
-            color: #555;
+        .duration-seats, .bus-info, .fare-rating {
+            margin-top: 8px;
+        }
+
+        .bus-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .duration-seats {
+            font-size: 16px;
         }
 
         .fare-rating {
             display: flex;
-            flex-direction: column;
-            align-items: flex-end;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .fare {
             font-size: 18px;
             font-weight: bold;
             color: #007BFF;
+        }
+
+        .seats {
+            font-size: 14px;
+            color: #555;
         }
 
         .no-results {
@@ -107,32 +107,34 @@
 </head>
 <body>
     <header>
-        <h1>Search Results</h1>
+        <h1>Available Buses for {{ operator.name }}</h1>
     </header>
+
     <main>
-        <h2>Available Bus Operators for {{ source }} to {{ destination }} Trip</h2>
-        
-        {% if operators_data %}
-        <p>Total buses available for your trip: {{ total_buses }}</p>
-            {% for data in operators_data %}
+        {% if buses %}
+            {% for bus in buses %}
                 <div class="bus-result">
-                    {% if data.operator.id %}
-                    <a href="{% url 'operator_buses' data.operator.id %}?source={{ source }}&destination={{ destination }}&travel_date={{ date|date:'Y-m-d' }}" class="bus-button">
-                            <div class="operator-info">
-                                <span class="operator">{{ data.operator }}</span>
-                                <span class="bus-count">{{ data.bus_count }} Buses Available</span>
+                    <a href="{% url 'select_boarding_dropping' bus.id %}" class="bus-button">
+                        <div class="bus-info">
+                            <div class="time">
+                                {{ bus.departure_time|time:"H:i" }} - {{ bus.arrival_time|time:"H:i" }}
                             </div>
-                            <div class="fare-rating">
-                                <span class="fare">From &#8373;{{ data.lowest_fare|floatformat:2 }}</span>
+                            <div class="duration-seats">
+                                {{ bus.travel_duration }} Hours • {{ bus.seats_available }} Seats Available
                             </div>
-                        </a>
-                    {% else %}
-                        <p>Operator ID is not available.</p>
-                    {% endif %}
+                        </div>
+                        <div class="fare-rating">
+                            <div class="fare">
+                                &#8373;{{ bus.fare|floatformat:2 }}
+                            </div>
+                        </div>
+                    </a>
                 </div>
             {% endfor %}
         {% else %}
-            <p>No results found.</p>
+            <div class="no-results">
+                No buses available for the selected operator.
+            </div>
         {% endif %}
     </main>
 </body>

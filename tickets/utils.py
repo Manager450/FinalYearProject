@@ -14,6 +14,19 @@ import africastalking
 from django.conf import settings
 import requests
 import re
+from tickets.models import Booking
+
+def calculate_total_revenue():
+    total_revenue = 0
+    bookings = Booking.objects.filter(status='active')
+    for booking in bookings:
+        total_revenue += booking.total_amount()
+    return total_revenue
+
+def calculate_busticketx_commission():
+    total_revenue = calculate_total_revenue()
+    commission_rate = 0.15
+    return total_revenue * commission_rate
 
 def format_phone_number(number):
     """

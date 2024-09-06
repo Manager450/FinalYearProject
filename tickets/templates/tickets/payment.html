@@ -5,7 +5,7 @@
     <title>Payment - BusTicketX</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap">
     <style>
-        body {
+          body {
             font-family: 'Poppins', sans-serif;
             display: flex;
             flex-direction: column;
@@ -36,7 +36,7 @@
             background: #fff;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             text-align: center;
         }
 
@@ -45,7 +45,7 @@
         }
 
         input[type="text"] {
-            width: 80%; 
+            width: 80%;
             max-width: 300px;
             padding: 10px;
             border: 1px solid #ccc;
@@ -81,6 +81,7 @@
         a:hover {
             text-decoration: underline;
         }
+
         .popup {
             display: none;
             position: fixed;
@@ -90,7 +91,7 @@
             width: 100%;
             height: 100%;
             overflow: auto;
-            background-color: rgba(0,0,0,0.5);
+            background-color: rgba(0, 0, 0, 0.5);
         }
 
         .popup-content {
@@ -141,67 +142,115 @@
         }
     </style>
 </head>
-<body>
-    <div id="messagePopup" class="popup">
-        <div class="popup-content">
-            <span class="popup-close" onclick="closePopup()">&times;</span>
-            <ul class="messages">
-                {% if messages %}
-                    {% for message in messages %}
-                        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-                    {% endfor %}
-                {% endif %}
-            </ul>
-        </div>
+<div id="messagePopup" class="popup">
+    <div class="popup-content">
+        <span class="popup-close" onclick="closePopup()">&times;</span>
+        <ul class="messages">
+            {% if messages %}
+                {% for message in messages %}
+                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            {% endif %}
+        </ul>
     </div>
+</div>
+<body>
     <div class="details">
-        <h1>Payment for Booking: {{ booking.bus.name }}</h1>
+        <h1>Payment for Booking: {{ bus.name }}</h1>
         <p>Amount: GHS {{ total_price|floatformat:2 }}</p>
         <p>Please review your booking details before proceeding with the payment. Ensure that all information is correct.</p>
         <form id="paymentForm" method="post">
             {% csrf_token %}
+
+            <!-- Ask if booking for self or others -->
+            <label>Are you booking for yourself?</label><br>
+            <input type="radio" id="self_yes" name="booking_for_self" value="yes" checked>
+            <label for="self_yes">Yes</label>
+            <input type="radio" id="self_no" name="booking_for_self" value="no">
+            <label for="self_no">No</label><br><br>
+
+            <!-- Conditional questions for booking for others -->
+            <div id="accountQuestion" style="display: none;">
+                <label>Does the other person have an account?</label><br>
+                <input type="radio" id="account_yes" name="other_account" value="yes">
+                <label for="account_yes">Yes</label>
+                <input type="radio" id="account_no" name="other_account" value="no">
+                <label for="account_no">No</label><br><br>
+
+                <!-- Username field for existing user -->
+                <div class="form-group" id="usernameField" style="display: none;">
+                    <label for="username">Username of the other person:</label>
+                    <input type="text" id="username" name="username">
+                </div>
+
+                <!-- Name field for non-account holders -->
+                <div class="form-group" id="nameField" style="display: none;">
+                    <label for="name_on_ticket">Name to appear on the ticket:</label>
+                    <input type="text" id="name_on_ticket" name="name_on_ticket">
+                </div>
+            </div>
+
+            <!-- Phone Number -->
             <label for="phone_number">Phone Number:</label>
             <input type="text" id="phone_number" name="phone_number" required>
+
+            <!-- Payment button -->
             <div class="form-group">
                 <button type="submit" id="paystackBtn">Confirm Payment</button>
             </div>
         </form>
     </div>
     <a href="{% url 'home' %}">Return to Home</a>
-
-    <script src="https://js.paystack.co/v1/inline.js"></script>
     <script type="text/javascript">
-        const paymentForm = document.getElementById('paymentForm');
-        paymentForm.addEventListener("submit", payWithPaystack, false);
-    
-        function payWithPaystack(e) {
+        document.getElementById('self_yes').addEventListener('change', function() {
+            document.getElementById('accountQuestion').style.display = 'none';
+        });
+        document.getElementById('self_no').addEventListener('change', function() {
+            document.getElementById('accountQuestion').style.display = 'block';
+        });
+
+        document.getElementById('account_yes').addEventListener('change', function() {
+            document.getElementById('usernameField').style.display = 'block';
+            document.getElementById('nameField').style.display = 'none';
+        });
+        document.getElementById('account_no').addEventListener('change', function() {
+            document.getElementById('usernameField').style.display = 'none';
+            document.getElementById('nameField').style.display = 'block';
+        });
+
+        document.getElementById('paymentForm').addEventListener("submit", function(e) {
             e.preventDefault();
-    
-            const phoneNumber = document.getElementById('phone_number').value;
-            const handler = PaystackPop.setup({
-                key: '{{ paystack_public_key }}', 
-                email: '{{ request.user.email }}',
-                amount: parseFloat("{{ total_price|floatformat:2 }}") * 100, // Convert amount to kobo
-                currency: 'GHS',
-                ref: '{{ reference }}', 
-                metadata: {
-                    custom_fields: [
-                        {
-                            display_name: "Phone Number",
-                            variable_name: "phone_number",
-                            value: phoneNumber,
-                        }
-                    ]
-                },
-                callback: function(response) {
-                    // Payment successful, submit the form
-                    paymentForm.submit();
-                },
-                onClose: function() {
-                    alert('Payment window closed.');
+
+            const bookingForSelf = document.querySelector('input[name="booking_for_self"]:checked').value;
+            if (bookingForSelf === "no") {
+                const otherAccount = document.querySelector('input[name="other_account"]:checked').value;
+                if (otherAccount === "yes") {
+                    const username = document.getElementById('username').value;
+                    if (username) {
+                        checkUserBooking(username);
+                    }
                 }
-            });
-            handler.openIframe();
+            } else {
+                // Proceed with form submission for self-booking
+                document.getElementById('paymentForm').submit();
+            }
+        });
+
+        function checkUserBooking(username) {
+            const url = "{% url 'check_booking' %}?username=" + username + "&bus_id={{ bus.id }}";
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.has_booking) {
+                        const confirmation = confirm(`${data.username} already has a booking with ${data.bus_name} on ${data.travel_date}. Are you sure you want to continue?`);
+                        if (confirmation) {
+                            document.getElementById('paymentForm').submit();
+                        }
+                    } else {
+                        document.getElementById('paymentForm').submit();
+                    }
+                });
         }
 
         function showPopup() {

@@ -6,8 +6,10 @@ register_converter(DecimalConverter, 'decimal')
 
 urlpatterns = [
     path('', views.home, name='home'),
-    path('search/', views.search_results, name='search_results'),
+    path('search-results/', views.search_results, name='search_results'),
+    path('bus-operator/<int:operator_id>/', views.operator_buses, name='operator_buses'),
     path('bus/<int:bus_id>/', views.bus_details, name='bus_details'),
+    path('check_booking/', views.check_user_booking, name='check_booking'),
     path('payment/<int:bus_id>/<int:boarding_point_id>/<int:dropping_point_id>/<str:seat_ids>/<decimal:total_price>/', views.payment, name='payment'),
     path('payment/verify/<str:reference>/', views.verify_payment, name='verify_payment'),
     path('payment_success/<int:payment_id>/', views.payment_success, name='payment_success'),
@@ -18,6 +20,7 @@ urlpatterns = [
     path('clear-all-bookings/', views.clear_all_bookings, name='clear_all_bookings'),
     path('select-boarding-dropping/<int:bus_id>/', views.select_boarding_dropping_points, name='select_boarding_dropping'),
     path('booking-summary/<int:bus_id>/<int:boarding_point_id>/<int:dropping_point_id>/', views.booking_summary, name='booking_summary'),
+    path('booking_confirmation/<int:bus_id>/<int:boarding_point_id>/<int:dropping_point_id>/<str:seat_ids>/<decimal:total_price>/', views.booking_confirmation, name='booking_confirmation'),
     path('cancel-booking/', views.cancel_booking_list, name='cancel_booking_list'),
     path('cancel-booking/<int:booking_id>/', views.cancel_booking, name='cancel_booking'),
     path('download_ticket/<int:booking_id>/', views.download_ticket, name='download_ticket'),

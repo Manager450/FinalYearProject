@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.conf import settings
-from .models import Bus, Booking, Payment, Review, BusRoute, BusStop, Seat
+from .models import Bus, Booking, Payment, Review, BusRoute, BusStop, Seat, BusOperator
 from .forms import BookingForm, ReviewForm, UserRegistrationForm, BusRouteForm, UserProfileForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -18,7 +18,9 @@ import time
 from .paystack import Paystack
 import requests
 import secrets
-
+from datetime import date
+from collections import defaultdict
+import logging
 
 def home(request):
     today_date = timezone.now().date()
@@ -31,40 +33,97 @@ def search_results(request):
     if request.method == 'GET':
         source = request.GET.get('source')
         destination = request.GET.get('destination')
-        date_str = request.GET.get('travel_date')  # Use 'travel_date' to match the form field name
+        date_str = request.GET.get('travel_date')
         
         # Parse date_str to a date object or set to None if invalid
-        travel_date = parse_date(date_str) if date_str else None
+        travel_date = parse_date(date_str)
         
-        # If travel_date is None, it means the date was invalid or not provided
-        if travel_date is None:
-            messages.error(request, "Invalid travel date. Please enter a valid date.")
-            return redirect('home')  # Redirect back to the home page or show an error page
+        if not travel_date:
+            messages.error(request, "Invalid travel date.")
+            return redirect('home')
         
-        # Base query to filter buses by source and destination
-        buses = Bus.objects.filter(source=source, destination=destination)
+        # Get buses matching the criteria
+        buses = Bus.objects.filter(source=source, destination=destination, departure_time__date=travel_date)
         
-        # Further filter by travel date
-        buses = buses.filter(departure_time__date=travel_date)
-        
-        # Filter buses to only those with available seats
-        buses = [bus for bus in buses if bus.available_seats() > 0]
-        
-        # Compute additional attributes for each bus
+        # Organize buses by operator
+        operators_data = []
+        grouped_buses = defaultdict(list)
         for bus in buses:
-            bus.travel_duration = (bus.arrival_time - bus.departure_time).total_seconds() // 3600
-            bus.seats_available = Seat.objects.filter(bus=bus, is_available=True).count()
-            bus.fare = bus.price
+            grouped_buses[bus.operator].append(bus)
         
-        # Context for rendering the template
+        for operator, buses in grouped_buses.items():
+            bus_count = len(buses)
+            lowest_fare = min(bus.price for bus in buses)
+            operators_data.append({
+                'operator': operator,
+                'bus_count': bus_count,
+                'lowest_fare': lowest_fare,
+            })
+        
+        total_buses = len(buses)
         context = {
-            'buses': buses,
+            'operators_data': operators_data,
             'source': source,
             'destination': destination,
             'date': travel_date,
+            'total_buses': total_buses,
         }
-        
         return render(request, 'tickets/search_results.html', context)
+
+
+logger = logging.getLogger(__name__)
+
+def operator_buses(request, operator_id):
+    operator = get_object_or_404(BusOperator, id=operator_id)
+    
+    # Fetch query parameters
+    source = request.GET.get('source')
+    destination = request.GET.get('destination')
+    date_str = request.GET.get('travel_date')
+
+    # Log the received parameters for debugging
+    logger.debug(f"Operator Buses - Source: {source}, Destination: {destination}, Travel Date: {date_str}")
+    print(f"Operator Buses - Source: {source}, Destination: {destination}, Travel Date: {date_str}")
+    
+    # Validate travel date
+    travel_date = parse_date(date_str)
+    
+    if not travel_date:
+        messages.error(request, "Invalid travel date. Please enter a valid date.")
+        print("Invalid travel date received:", date_str)
+        return redirect('home')
+
+    if not source or not destination:
+        messages.error(request, "Missing source or destination.")
+        print(f"Missing source or destination - Source: {source}, Destination: {destination}")
+        return redirect('home')
+    
+    # Query the buses for the operator, source, destination, and travel date
+    buses = Bus.objects.filter(
+        operator_id=operator_id,
+        source=source,
+        destination=destination,
+        departure_time__date=travel_date
+    )
+
+    # Log the number of buses found
+    logger.debug(f"Buses found for operator {operator_id}: {len(buses)}")
+    print(f"Buses found for operator {operator_id}: {len(buses)}")
+    
+    # Ensure buses have available seats
+    buses = [bus for bus in buses if bus.available_seats() > 0]
+
+    for bus in buses:
+        bus.travel_duration = (bus.arrival_time - bus.departure_time).total_seconds() // 3600
+        bus.seats_available = Seat.objects.filter(bus=bus, is_available=True).count()
+        bus.fare = bus.price
+
+    context = {
+        'buses': buses,
+        'operator': operator,
+    }
+
+    return render(request, 'tickets/operator_buses.html', context)
     
 def select_boarding_dropping_points(request, bus_id):
     bus = get_object_or_404(Bus, id=bus_id)
@@ -78,29 +137,35 @@ def select_boarding_dropping_points(request, bus_id):
         if form.is_valid():
             if not request.user.is_authenticated:
                 return JsonResponse({'success': False, 'errors': 'Please log in to complete your booking'})
+
             boarding_point = form.cleaned_data['boarding_point']
             dropping_point = form.cleaned_data['dropping_point']
             redirect_url = reverse('booking_summary', args=[bus_id, boarding_point.id, dropping_point.id])
-            print(type(settings))
             return redirect(redirect_url)
-             
     else:
         form = BusRouteForm()
         form.fields['boarding_point'].queryset = boarding_points
         form.fields['dropping_point'].queryset = dropping_points
-        return render(request, 'tickets/select_boarding_dropping.html', {'form': form, 'bus': bus})
+
+    return render(request, 'tickets/select_boarding_dropping.html', {'form': form, 'bus': bus})
+
 
 @login_required(login_url='/login/')
 def booking_summary(request, bus_id, boarding_point_id, dropping_point_id):
+    # Fetch bus, boarding point, dropping point, and seat information
     bus = get_object_or_404(Bus, id=bus_id)
     boarding_point = get_object_or_404(BusStop, id=boarding_point_id)
     dropping_point = get_object_or_404(BusStop, id=dropping_point_id)
-    seats = Seat.objects.filter(bus=bus)  # Fetch all seats
+    seats = Seat.objects.filter(bus=bus)  # Fetch all seats for the bus
 
+    # Check if the request method is POST (i.e., form submission)
     if request.method == 'POST':
-        selected_seat_ids = request.POST.getlist('seat_ids')
+        # Get selected seat IDs from the form submission
+        selected_seat_ids = request.POST.get('seat_ids', '').split(',')
+        selected_seat_ids = [int(seat_id.strip()) for seat_id in selected_seat_ids if seat_id.strip()]
 
-        if not selected_seat_ids:  # If no seats are selected
+        # If no seats are selected, return error message
+        if not selected_seat_ids:
             return render(request, 'tickets/booking_summary.html', {
                 'bus': bus,
                 'boarding_point': boarding_point,
@@ -109,16 +174,59 @@ def booking_summary(request, bus_id, boarding_point_id, dropping_point_id):
                 'error_message': 'Please select at least one seat.'
             })
 
-        selected_seat_ids = [int(seat_id.strip()) for seat_id in selected_seat_ids]
-        total_price = bus.price * len(selected_seat_ids)  # Correctly calculate total price
+        # Calculate total price based on the number of selected seats
+        total_price = bus.price * len(selected_seat_ids)
+        
+        # Extract the departure date from the selected bus
+        departure_date = bus.departure_time.date()
 
-        return redirect('payment',bus_id=bus.id, boarding_point_id=boarding_point_id, dropping_point_id=dropping_point_id, seat_ids=','.join(map(str, selected_seat_ids)), total_price=total_price)
+        # Check if the user already has any bookings on the same date, regardless of bus
+        existing_bookings = Booking.objects.filter(
+            user=request.user,
+            bus__departure_time__date=departure_date
+        )
+        
+        if existing_bookings.exists():
+            # If the user has an existing booking on the same date, redirect to booking confirmation page
+            return redirect('booking_confirmation', 
+                            bus_id=bus_id, 
+                            boarding_point_id=boarding_point_id, 
+                            dropping_point_id=dropping_point_id,
+                            seat_ids=','.join(map(str, selected_seat_ids)),
+                            total_price=total_price)
+        
+        # If no existing bookings, redirect to the payment page
+        return redirect('payment', 
+                        bus_id=bus_id, 
+                        boarding_point_id=boarding_point_id, 
+                        dropping_point_id=dropping_point_id, 
+                        seat_ids=','.join(map(str, selected_seat_ids)), 
+                        total_price=total_price)
 
+    # Handle the GET request to display the booking summary
     return render(request, 'tickets/booking_summary.html', {
         'bus': bus,
         'boarding_point': boarding_point,
         'dropping_point': dropping_point,
-        'seats': seats
+        'seats': seats,
+    })
+
+@login_required(login_url='/login/')
+def booking_confirmation(request, bus_id, boarding_point_id, dropping_point_id, seat_ids, total_price):
+    if request.method == 'POST':
+        if 'confirm' in request.POST:
+            # Redirect to payment page if user confirms the booking
+            return redirect('payment', bus_id=bus_id, boarding_point_id=boarding_point_id, dropping_point_id=dropping_point_id, seat_ids=seat_ids, total_price=total_price)
+        else:
+            # Redirect back to booking summary if user cancels
+            return redirect('booking_summary', bus_id=bus_id, boarding_point_id=boarding_point_id, dropping_point_id=dropping_point_id)
+    
+    return render(request, 'tickets/booking_confirmation.html', {
+        'bus_id': bus_id,
+        'boarding_point_id': boarding_point_id,
+        'dropping_point_id': dropping_point_id,
+        'seat_ids': seat_ids,
+        'total_price': total_price
     })
 
 @login_required
@@ -187,20 +295,17 @@ def payment(request, bus_id, boarding_point_id, dropping_point_id, seat_ids, tot
     bus = get_object_or_404(Bus, id=bus_id)
     boarding_point = get_object_or_404(BusStop, id=boarding_point_id)
     dropping_point = get_object_or_404(BusStop, id=dropping_point_id)
-
     seat_ids_list = [int(seat_id) for seat_id in seat_ids.split(',')]
     seats = Seat.objects.filter(id__in=seat_ids_list)
-
     paystack_public_key = settings.PAYSTACK_PUBLIC_KEY
 
-    # Retrieve the existing payment object
     existing_payment = Payment.objects.filter(
         booking__bus=bus,
         booking__boarding_point=boarding_point,
         booking__dropping_point=dropping_point,
         booking__user=request.user,
         status='Success'
-    ).first()  # Use first() to get the object or None
+    ).first()
 
     if existing_payment:
         messages.error(request, "Payment has already been made for this booking.")
@@ -208,17 +313,46 @@ def payment(request, bus_id, boarding_point_id, dropping_point_id, seat_ids, tot
 
     if request.method == 'POST':
         phone_number = request.POST.get('phone_number')
+        booking_for_self = request.POST.get('booking_for_self')
+
+        if booking_for_self == 'yes':
+            booking_user = request.user
+            name_on_ticket = None  # Not needed for self-booking
+
+        else:
+            other_account = request.POST.get('other_account')
+
+            if other_account == 'yes':
+                username = request.POST.get('username')
+                try:
+                    booking_user = User.objects.get(username=username)
+                except User.DoesNotExist:
+                    messages.error(request, "User not found.")
+                    return redirect('payment', bus_id=bus.id, boarding_point_id=boarding_point.id, dropping_point_id=dropping_point.id, seat_ids=seat_ids, total_price=total_price)
+
+                # Check if the user already has a booking on the same date
+                existing_booking = Booking.objects.filter(user=booking_user, bus__departure_time=bus.departure_time).first()
+
+                if existing_booking:
+                    messages.warning(request, f"{username} already has a booking with {existing_booking.bus.name} on {existing_booking.bus.departure_time.strftime('%Y-%m-%d')}.")
+                    return redirect('payment', bus_id=bus.id, boarding_point_id=boarding_point.id, dropping_point_id=dropping_point.id, seat_ids=seat_ids, total_price=total_price)
+
+                name_on_ticket = None  # Not needed if user has an account
+
+            else:
+                booking_user = None  # No user account, so we will just use the name
+                name_on_ticket = request.POST.get('name_on_ticket')
 
         # Create the booking
         booking = Booking.objects.create(
-            user=request.user,
+            user=booking_user,
             bus=bus,
             boarding_point=boarding_point,
             dropping_point=dropping_point,
         )
         booking.seats.set(seats)
 
-        # Generate the reference
+        # Generate the payment reference
         reference = secrets.token_urlsafe(20)
 
         # Initialize payment with Paystack
@@ -230,7 +364,7 @@ def payment(request, bus_id, boarding_point_id, dropping_point_id, seat_ids, tot
         data = {
             'email': request.user.email,
             'amount': int(total_price * 100),  # Amount in kobo
-            'reference': reference,  # Use the generated reference
+            'reference': reference,
             'callback_url': request.build_absolute_uri(reverse('verify_payment', args=[reference]))
         }
 
@@ -246,7 +380,7 @@ def payment(request, bus_id, boarding_point_id, dropping_point_id, seat_ids, tot
                 booking=booking,
                 amount=total_price,
                 reference=reference,
-                status='Pending'  # Initially mark as pending
+                status='Pending'
             )
 
             # Mark seats as unavailable (can undo if payment fails)
@@ -261,7 +395,8 @@ def payment(request, bus_id, boarding_point_id, dropping_point_id, seat_ids, tot
     context = {
         'total_price': total_price,
         'seats': seats,
-        'paystack_public_key': paystack_public_key, 
+        'paystack_public_key': paystack_public_key,
+        'bus': bus,  # Pass bus details for display
     }
 
     return render(request, 'tickets/payment.html', context)
@@ -296,20 +431,14 @@ def payment_success(request, payment_id):
         if 'download' in request.POST:
             buffer = generate_ticket(booking)
             return FileResponse(buffer, as_attachment=True, filename='ticket.pdf')
-        elif 'send_sms' in request.POST:
-            phone_number = request.POST.get('phone_number', booking.user.profile.phone_number)
-            
-            try:
-                formatted_phone_number = format_phone_number(phone_number)
-            except ValueError as e:
-                messages.error(request, str(e))
-                return redirect('payment_success', payment_id=payment_id)
+        
+        return redirect('payment_success', payment_id=payment_id)
             
             # Ensure send_mticket is called with formatted phone number
-            send_mticket(formatted_phone_number, booking)
-            messages.success(request, "m-Ticket sent successfully!")
 
     return render(request, 'tickets/payment_success.html', {'payment': payment, 'booking': booking})
+
+
 
 def payment_failed(request):
     return render(request, 'tickets/payment_failed.html', {'message': 'Payment verification failed. Please try again.'})
@@ -500,3 +629,33 @@ def password_reset_confirm(request):
         except User.DoesNotExist:
             messages.error(request, 'No account found with this email.')
     return render(request, 'tickets/password_reset_confirm.html')
+
+def report_view(request):
+    operators = BusOperator.objects.all()
+    context = {
+        'operators': operators
+    }
+    return render(request, 'tickets/report.html', context)
+
+from django.http import JsonResponse
+from .models import Booking, User
+
+def check_user_booking(request):
+    username = request.GET.get('username')
+    bus_id = request.GET.get('bus_id')
+    user = User.objects.filter(username=username).first()
+    
+    if not user:
+        return JsonResponse({'error': 'User not found'}, status=404)
+
+    existing_booking = Booking.objects.filter(user=user, bus__id=bus_id).first()
+    
+    if existing_booking:
+        return JsonResponse({
+            'has_booking': True,
+            'username': username,
+            'bus_name': existing_booking.bus.name,
+            'travel_date': existing_booking.bus.departure_time.strftime('%Y-%m-%d')
+        })
+    
+    return JsonResponse({'has_booking': False})
