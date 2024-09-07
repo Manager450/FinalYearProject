@@ -1,5 +1,5 @@
 from django import forms
-from .models import Booking, Review, BusStop
+from .models import Booking, Review, BusStop, BusOperator
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
@@ -37,3 +37,27 @@ class UserProfileForm(forms.ModelForm):
         if User.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
             raise ValidationError('Email addresses must be unique.')
         return email
+    
+class ReportForm(forms.Form):
+    bus_operator = forms.ModelChoiceField(queryset=BusOperator.objects.all(), required=True)
+    
+    # Use the DateInput widget with a calendar
+    start_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(
+            attrs={
+                'type': 'date',
+                'class': 'form-control',  # Optional: add Bootstrap or custom styling
+            }
+        )
+    )
+    
+    end_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(
+            attrs={
+                'type': 'date',
+                'class': 'form-control',  # Optional: add Bootstrap or custom styling
+            }
+        )
+    )

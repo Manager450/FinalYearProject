@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.conf import settings
 from .models import Bus, Booking, Payment, Review, BusRoute, BusStop, Seat, BusOperator
-from .forms import BookingForm, ReviewForm, UserRegistrationForm, BusRouteForm, UserProfileForm
+from .forms import BookingForm, ReviewForm, UserRegistrationForm, BusRouteForm, UserProfileForm, ReportForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth import login, logout, authenticate, update_session_auth_hash
@@ -21,6 +21,8 @@ import secrets
 from datetime import date
 from collections import defaultdict
 import logging
+from decimal import Decimal, ROUND_HALF_UP
+from django.db.models import Sum
 
 def home(request):
     today_date = timezone.now().date()
@@ -659,3 +661,46 @@ def check_user_booking(request):
         })
     
     return JsonResponse({'has_booking': False})
+
+
+def generate_report_view(request):
+    if request.method == 'POST':
+        form = ReportForm(request.POST)
+        if form.is_valid():
+            operator = form.cleaned_data['bus_operator']
+            start_date = form.cleaned_data['start_date']
+            end_date = form.cleaned_data['end_date']
+
+            # Filter bookings based on operator and date range
+            if operator:
+                bookings = Booking.objects.filter(bus__operator=operator, booked_on__range=[start_date, end_date])
+            else:
+                bookings = Booking.objects.filter(booked_on__range=[start_date, end_date])
+
+            total_revenue = bookings.aggregate(total=Sum('payment__amount'))['total'] or Decimal('0.00')
+            total_revenue_after_commission = total_revenue - (total_revenue * Decimal('0.10'))
+
+            # Round amounts to two decimal places
+            total_revenue = total_revenue.quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)
+            total_revenue_after_commission = total_revenue_after_commission.quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)
+
+            seats_booked = bookings.count()
+            seats_unbooked = Seat.objects.filter(bus__operator=operator, is_available=True).count() if operator else 0
+
+            context = {
+                'operator': operator,
+                'total_revenue': total_revenue,
+                'total_revenue_after_commission': total_revenue_after_commission,
+                'seats_booked': seats_booked,
+                'seats_unbooked': seats_unbooked,
+                'start_date': start_date,
+                'end_date': end_date,
+            }
+
+            return render(request, 'admin/report.html', context)
+        else:
+            messages.error(request, "There was an error with the form. Please check the inputs.")
+    else:
+        form = ReportForm()
+
+    return render(request, 'admin/report_form.html', {'form': form})

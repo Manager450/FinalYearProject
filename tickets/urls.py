@@ -44,4 +44,5 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')),
     path('password-reset/', views.password_reset_request, name='password_reset_request'),
     path('reset-password/', views.password_reset_confirm, name='password_reset_confirm'),
+    path('report/', views.generate_report_view, name='generate_report'),
 ]
