@@ -59,6 +59,22 @@
             background-color: #0056b3; /* Darker blue on hover */
             text-decoration: underline;
         }
+        .back-link {
+            display: block;
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .back-link a {
+            color: #007BFF;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -75,6 +91,10 @@
         <p><strong>Price:</strong> {{ bus.price }}</p>
         <p><strong>Amenities:</strong> {{ bus.amenities }}</p>
         <a href="{% url 'book_bus' bus.id %}">Book Now</a>
+
+        <section class="back-link">
+            <a href="/">Return to Home</a>
+        </section>
     </main>
 </body>
 </html>

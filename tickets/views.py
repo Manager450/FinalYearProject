@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.conf import settings
+from django import forms
 from .models import Bus, Booking, Payment, Review, BusRoute, BusStop, Seat, BusOperator
 from .forms import BookingForm, ReviewForm, UserRegistrationForm, BusRouteForm, UserProfileForm, ReportForm
 from django.contrib.auth.decorators import login_required
@@ -24,9 +25,16 @@ import logging
 from decimal import Decimal, ROUND_HALF_UP
 from django.db.models import Sum
 
+from .models import BusOperator
+
 def home(request):
     today_date = timezone.now().date()
-    return render(request, 'tickets/home.html', {'today_date': today_date})
+    # Fetch all BusOperator instances from the database
+    popular_operators = BusOperator.objects.all()
+    return render(request, 'tickets/home.html', {
+        'today_date': today_date,
+        'popular_operators': popular_operators
+    })
 
 def search_results(request):
     # Clear past buses
@@ -664,28 +672,50 @@ def check_user_booking(request):
 
 
 def generate_report_view(request):
+    if hasattr(request.user, 'bus_operator'):  # Check if the user is a bus operator
+        operator = request.user.bus_operator
+    else:
+        operator = None  # For superusers or users without a bus operator
+
     if request.method == 'POST':
-        form = ReportForm(request.POST)
+        # Superusers select the bus operator; bus operators don't need this field
+        form = ReportForm(request.POST, user=request.user) if request.user.is_superuser else ReportForm(request.POST)
+
         if form.is_valid():
-            operator = form.cleaned_data['bus_operator']
+            if request.user.is_superuser:
+                operator = form.cleaned_data['bus_operator']
+            else:
+                operator = request.user.bus_operator
+
             start_date = form.cleaned_data['start_date']
             end_date = form.cleaned_data['end_date']
 
-            # Filter bookings based on operator and date range
-            if operator:
-                bookings = Booking.objects.filter(bus__operator=operator, booked_on__range=[start_date, end_date])
-            else:
-                bookings = Booking.objects.filter(booked_on__range=[start_date, end_date])
-
+            # Filter bookings and seats based on operator and date range
+            bookings = Booking.objects.filter(
+                bus__operator=operator,
+                booked_on__range=[start_date, end_date],
+                status='active'
+            )
             total_revenue = bookings.aggregate(total=Sum('payment__amount'))['total'] or Decimal('0.00')
             total_revenue_after_commission = total_revenue - (total_revenue * Decimal('0.10'))
 
-            # Round amounts to two decimal places
             total_revenue = total_revenue.quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)
             total_revenue_after_commission = total_revenue_after_commission.quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)
 
             seats_booked = bookings.count()
-            seats_unbooked = Seat.objects.filter(bus__operator=operator, is_available=True).count() if operator else 0
+            seats_unbooked = Seat.objects.filter(
+                bus__operator=operator,
+                bus__departure_time__range=[start_date, end_date],
+                is_available=True
+            ).count() if operator else 0
+
+            total_trips = bookings.values('bus').distinct().count()
+            average_ticket_price = (total_revenue / bookings.count()) if bookings.count() > 0 else Decimal('0.00')
+            cancellations = Booking.objects.filter(
+                bus__operator=operator,
+                booked_on__range=[start_date, end_date],
+                status='cancelled'
+            ).count()
 
             context = {
                 'operator': operator,
@@ -695,12 +725,49 @@ def generate_report_view(request):
                 'seats_unbooked': seats_unbooked,
                 'start_date': start_date,
                 'end_date': end_date,
+                'total_trips': total_trips,
+                'average_ticket_price': average_ticket_price.quantize(Decimal('0.00'), rounding=ROUND_HALF_UP),
+                'cancellations': cancellations
             }
 
             return render(request, 'admin/report.html', context)
         else:
             messages.error(request, "There was an error with the form. Please check the inputs.")
     else:
-        form = ReportForm()
+        # For GET requests, show the form. Superusers see the full form, bus operators only see date fields
+        form = ReportForm(user=request.user) if request.user.is_superuser else ReportForm()
 
     return render(request, 'admin/report_form.html', {'form': form})
+
+class UsernameUpdateForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['username']
+
+@login_required
+def update_username(request):
+    user = request.user
+    if request.method == 'POST':
+        form = UsernameUpdateForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your username was successfully updated!')
+            return redirect('profile')  # Redirect to profile or any page
+    else:
+        form = UsernameUpdateForm(instance=user)
+    return render(request, 'update_username.html', {'form': form})
+
+def operator_detail(request, operator_id):
+    operator = get_object_or_404(BusOperator, id=operator_id)
+    buses = Bus.objects.filter(operator=operator)
+    return render(request, 'tickets/operator_detail.html', {
+        'operator': operator,
+        'buses': buses
+    })
+
+def bus_operators_list(request):
+    operators = BusOperator.objects.all()
+    context = {
+        'operators': operators
+    }
+    return render(request, 'tickets/bus_operators_list.html', context)

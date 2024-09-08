@@ -1,0 +1,17 @@
+{% extends "admin/change_list.html" %}
+
+{% block content %}
+    {{ block.super }}
+
+    <!-- Debugging the context -->
+    <pre>{{ generate_report_button }}</pre>
+
+    <!-- The button itself -->
+    {% if generate_report_button %}
+        <div class="object-tools">
+            {{ generate_report_button|safe }}
+        </div>
+    {% else %}
+        <p>No generate report button found.</p>
+    {% endif %}
+{% endblock %}

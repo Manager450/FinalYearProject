@@ -12,6 +12,7 @@ from decimal import Decimal
 class BusOperator(models.Model):
     name = models.CharField(max_length=100)
     contact_info = models.TextField()
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='bus_operator', null=True, blank=True)  # Link to user
 
     def __str__(self):
         return self.name
@@ -85,10 +86,22 @@ class Booking(models.Model):
     dropping_point = models.ForeignKey(BusStop, related_name='booking_dropping_point', on_delete=models.CASCADE)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
     cleared = models.BooleanField(default=False)
-    ticket_id = models.CharField(max_length=8, unique=True, default=uuid.uuid4().hex[:8].upper())
+    ticket_id = models.CharField(max_length=8, unique=True)
 
     def __str__(self):
         return f"{self.user.username} - {self.bus.name}"
+
+    def save(self, *args, **kwargs):
+        if not self.ticket_id:
+            self.ticket_id = self.generate_unique_ticket_id()
+        super().save(*args, **kwargs)
+
+    def generate_unique_ticket_id(self):
+        while True:
+            ticket_id = uuid.uuid4().hex[:8].upper()
+            if not Booking.objects.filter(ticket_id=ticket_id).exists():
+                return ticket_id
+
 
 class Payment(models.Model):
     booking = models.OneToOneField(Booking, on_delete=models.CASCADE)

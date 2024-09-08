@@ -65,11 +65,23 @@
         <table>
           <tr>
             <th>Total Revenue</th>
-            <td class="highlight">${{ total_revenue }}</td>
+            <td class="highlight">${{ total_revenue|floatformat:2 }}</td>
           </tr>
           <tr>
             <th>Revenue After Commission</th>
-            <td class="highlight">${{ total_revenue_after_commission }}</td>
+            <td class="highlight">${{ total_revenue_after_commission|floatformat:2 }}</td>
+          </tr>
+          <tr>
+            <th>Average Ticket Price</th>
+            <td class="highlight">${{ average_ticket_price|floatformat:2 }}</td>
+          </tr>
+          <tr>
+            <th>Total Trips</th>
+            <td>{{ total_trips }}</td>
+          </tr>
+          <tr>
+            <th>Number of Cancellations</th>
+            <td>{{ cancellations }}</td>
           </tr>
         </table>
       </div>
@@ -102,15 +114,27 @@
         <table>
           <tr>
             <th>Total Revenue</th>
-            <td class="highlight">${{ total_revenue }}</td>
+            <td class="highlight">${{ total_revenue|floatformat:2 }}</td>
           </tr>
           <tr>
             <th>Revenue After Commission</th>
-            <td class="highlight">${{ total_revenue_after_commission }}</td>
+            <td class="highlight">${{ total_revenue_after_commission|floatformat:2}}</td>
+          </tr>
+          <tr>
+            <th>Average Ticket Price</th>
+            <td class="highlight">${{ average_ticket_price|floatformat:2 }}</td>
+          </tr>
+          <tr>
+            <th>Total Trips</th>
+            <td>{{ total_trips }}</td>
+          </tr>
+          <tr>
+            <th>Number of Cancellations</th>
+            <td>{{ cancellations }}</td>
           </tr>
         </table>
       </div>
-
+      
       <!-- Seats Section -->
       <div class="section">
         <h2>Overall Seat Summary</h2>
@@ -121,7 +145,7 @@
           </tr>
           <tr>
             <th>Total Seats Available</th>
-            <td>{{ seats_unbooked}}</td>
+            <td>{{ seats_unbooked }}</td>
           </tr>
         </table>
       </div>

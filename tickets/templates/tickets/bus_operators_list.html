@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bus Operators List - BusTicketX</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        header {
+            padding: 1rem;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        main {
+            padding: 2rem;
+            margin: 0 auto;
+            max-width: 800px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+
+        h2 {
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #007BFF;
+            padding-bottom: 0.5rem;
+            font-size: 20px;
+        }
+
+        .operator-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .operator-item {
+            padding: 16px;
+            margin-bottom: 16px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .operator-item h3 {
+            margin-top: 0;
+            font-size: 18px;
+            color: #007BFF;
+        }
+
+        .operator-item p {
+            font-size: 16px;
+            color: #555;
+            margin: 5px 0;
+        }
+
+        .no-operators {
+            text-align: center;
+            font-size: 16px;
+            color: #999;
+        }
+        .back-link {
+            display: block;
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .back-link a {
+            color: #007BFF;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Bus Operators List</h1>
+    </header>
+    <main>
+        <h2>Currently Registered Bus Operators on BusTicketX</h2>
+        
+        {% if operators %}
+            <ul class="operator-list">
+                {% for operator in operators %}
+                    <li class="operator-item">
+                        <h3>{{ operator.name }}</h3>
+                        <p><strong>Contact:</strong> {{ operator.contact_info }}</p>
+                        <p><strong>Location:</strong> {{ operator.location }}</p>
+                        <p><strong>Services:</strong> {{ operator.services }}</p>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="no-operators">No bus operators are currently registered.</p>
+        {% endif %}
+        <section class="back-link">
+            <a href="/">Return to Home</a>
+        </section>
+    </main>
+</body>
+</html>

@@ -1,6 +1,7 @@
 from django.urls import include, path, register_converter
 from .converters import DecimalConverter
 from . import views
+from django.contrib.auth import views as auth_views
 
 register_converter(DecimalConverter, 'decimal')
 
@@ -45,4 +46,9 @@ urlpatterns = [
     path('password-reset/', views.password_reset_request, name='password_reset_request'),
     path('reset-password/', views.password_reset_confirm, name='password_reset_confirm'),
     path('report/', views.generate_report_view, name='generate_report'),
+    path('password_change/', auth_views.PasswordChangeView.as_view(), name='password_change'),
+    path('password_change/done/', auth_views.PasswordChangeDoneView.as_view(), name='password_change_done'),
+    path('update-username/', views.update_username, name='update_username'),
+    path('operator/<int:operator_id>/', views.operator_detail, name='operator_detail'),
+    path('bus-operators/', views.bus_operators_list, name='bus_operators_list'),
 ]

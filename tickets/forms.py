@@ -39,25 +39,39 @@ class UserProfileForm(forms.ModelForm):
         return email
     
 class ReportForm(forms.Form):
-    bus_operator = forms.ModelChoiceField(queryset=BusOperator.objects.all(), required=True)
-    
-    # Use the DateInput widget with a calendar
+    bus_operator = forms.ModelChoiceField(
+        queryset=BusOperator.objects.none(),  # Initially empty, will be dynamically filled in the view
+        required=False  # Only required for superusers
+    )
+
     start_date = forms.DateField(
         required=False,
         widget=forms.DateInput(
             attrs={
                 'type': 'date',
-                'class': 'form-control',  # Optional: add Bootstrap or custom styling
+                'class': 'form-control',
             }
         )
     )
-    
+
     end_date = forms.DateField(
         required=False,
         widget=forms.DateInput(
             attrs={
                 'type': 'date',
-                'class': 'form-control',  # Optional: add Bootstrap or custom styling
+                'class': 'form-control',
             }
         )
     )
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        
+        # Superuser sees all bus operators
+        if user and user.is_superuser:
+            self.fields['bus_operator'].queryset = BusOperator.objects.all()
+            self.fields['bus_operator'].required = True
+        # Bus operators don't need to select a bus operator, it's set automatically
+        elif user and hasattr(user, 'bus_operator'):
+            self.fields.pop('bus_operator')  # Remove the field for bus operators
